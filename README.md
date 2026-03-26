@@ -10,7 +10,11 @@ Most research loops still make one brittle decision: metric up means ship, metri
 - broken: the change damaged the system badly enough that rollback is the right action
 - incomparable: the evaluation regime changed, so the before/after comparison is invalid
 
-That is why the project uses a four-state evaluation logic around `truthness`, `coherence`, `comparability`, plus a separate `goodhart_score`, instead of a single binary accept/reject rule.
+The name comes from [Gautama's Chatuskoti](https://en.wikipedia.org/wiki/Catu%E1%B9%A3ko%E1%B9%ADi), an ancient Indian logical system that extends simple true/false reasoning. The core intuition is that binary logic breaks down in exactly the cases research loops run into most often: evidence can conflict, and sometimes the question is not even well-formed enough to judge cleanly.
+
+This repo turns that intuition into a continuous evaluation system. `truthness` captures whether the benchmark really improved, `coherence` captures whether the result remains internally consistent and stable, and `comparability` captures whether the before/after comparison is even valid. Those axes generate the practically important states that binary evaluation collapses together: clean gains, pyrrhic gains, broken results, and incomparable results. `goodhart_score` is kept separate to catch suspicious metric gains that are still technically comparable.
+
+That is why the project uses a Chatuskoti-inspired evaluation logic instead of a single binary accept/reject rule.
 
 ## Why four states beat binary eval
 

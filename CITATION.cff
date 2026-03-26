@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: Nagaraju
     given-names: Nagaraju
-repository-code: "https://github.com/nagaraju-gg/auto-researcher-chatuskoti"
+repository-code: "https://github.com/nagaraju-gg/chatuskoti-evals"
 license: MIT
 abstract: >-
   Benchmark-specific calibrated evaluation framework for research outcomes,
