@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+data/
+artifacts/*
+!artifacts/torch_failure_set_e10_v5/
+!artifacts/torch_failure_set_e10_v5/**
+!artifacts/torch_challenge_compare_v3/
+!artifacts/torch_challenge_compare_v3/**
+.DS_Store

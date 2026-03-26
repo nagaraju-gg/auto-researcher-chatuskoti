@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: Catuskoti AutoResearcher V1
+message: "If you use this repository, please cite it using the metadata below."
+type: software
+authors:
+  - family-names: Nagaraju
+    given-names: Nagaraju
+repository-code: "https://example.com/catuskoti-autoresearcher"
+license: MIT
+abstract: >-
+  Benchmark-specific calibrated prototype for Vec3 automated research evaluation,
+  including a torch-backed adversarial calibration benchmark over pyrrhic,
+  Goodhart-style, broken, and incomparable outcomes.
+keywords:
+  - automated research
+  - evaluation
+  - goodhart
+  - benchmark
+  - cifar-100
+  - resnet-18
+version: 0.1.0
+date-released: 2026-03-26
+

@@ -1,0 +1,3 @@
+-r requirements-torch.txt
+pytest>=8.0
+
