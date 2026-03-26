@@ -9,7 +9,7 @@ from catuskoti_ar.runner import run_comparison, run_failure_injection_set, run_s
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Catuskoti AutoResearcher V1 prototype")
+    parser = argparse.ArgumentParser(description="Chatuskoti Evals prototype")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     compare = subparsers.add_parser("compare", help="Run both controllers and generate a comparison report")

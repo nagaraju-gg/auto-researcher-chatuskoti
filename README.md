@@ -1,6 +1,8 @@
-# Catuskoti AutoResearcher V1
+# Chatuskoti Evals
 
-This repository implements a deterministic V1 prototype for the `Vec3` research loop described in the draft: `truthness`, `coherence`, and `comparability`, plus a separate `goodhart_score`.
+This repository implements a benchmark-specific calibrated evaluation prototype for `Vec3` research outcomes: `truthness`, `coherence`, and `comparability`, plus a separate `goodhart_score`.
+
+`Chatuskoti Evals` is the evaluation core for a future autonomous research loop, not a claim of a fully general AutoResearcher today.
 
 ## Current status
 
