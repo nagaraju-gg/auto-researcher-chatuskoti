@@ -1,6 +1,6 @@
 # Release Checklist
 
-Use this checklist before treating the repo as a public `Chatuskoti Evals` benchmark release.
+Use this checklist before treating the repo as a public `Chatuskoti Eval Framework` benchmark release.
 
 ## Positioning
 

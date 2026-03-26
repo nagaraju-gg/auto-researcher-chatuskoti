@@ -2,7 +2,7 @@
 
 Most evaluation systems make one coarse distinction: improvement or no improvement.
 
-That is too lossy for research loops. A model update can improve the reported metric while still being the wrong thing to merge. `Chatuskoti Evals` separates those cases so the control decision matches the kind of result we actually observed.
+That is too lossy for research loops. A model update can improve the reported metric while still being the wrong thing to merge. `Chatuskoti Eval Framework` separates those cases so the control decision matches the kind of result we actually observed.
 
 ## The five practical cases
 
@@ -21,7 +21,7 @@ The important shift is this:
 
 ## How the scoring works
 
-`Chatuskoti Evals` scores each outcome along:
+`Chatuskoti Eval Framework` scores each outcome along:
 
 - `truthness`: did the anchored benchmark metric really improve?
 - `coherence`: did internals remain healthy?

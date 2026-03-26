@@ -1,24 +1,48 @@
-# Chatuskoti Evals
+# Chatuskoti Eval Framework
 
-Most research loops still make one brittle decision: metric up means ship, metric down means reject.
+Modern AI evals usually assume every question has one correct answer and every output can be scored on a single pass/fail axis. That works for straightforward facts, but it breaks down in the real world.
 
-`Chatuskoti Evals` starts from a simpler claim: not every gain is the same kind of gain. A reported improvement can be:
+Some questions are:
 
-- clean: the benchmark improved and internals stayed healthy
-- pyrrhic: the metric improved, but training dynamics degraded
-- gamed: the metric improved for suspicious proxy-breaking reasons
-- broken: the change damaged the system badly enough that rollback is the right action
-- incomparable: the evaluation regime changed, so the before/after comparison is invalid
+- true
+- false
+- both, because evidence or interpretation conflicts
+- neither, because the question is ill-posed or not meaningfully evaluable
 
-The name comes from [Gautama's Chatuskoti](https://en.wikipedia.org/wiki/Catu%E1%B9%A3ko%E1%B9%ADi), an ancient Indian logical system that extends simple true/false reasoning. The core intuition is that binary logic breaks down in exactly the cases research loops run into most often: evidence can conflict, and sometimes the question is not even well-formed enough to judge cleanly.
+That is the intuition behind [Gautama's Chatuskoti](https://en.wikipedia.org/wiki/Catu%E1%B9%A3ko%E1%B9%ADi), an ancient Indian logical system that extends simple true/false reasoning into a four-way lens.
 
-This repo turns that intuition into a continuous evaluation system. `truthness` captures whether the benchmark really improved, `coherence` captures whether the result remains internally consistent and stable, and `comparability` captures whether the before/after comparison is even valid. Those axes generate the practically important states that binary evaluation collapses together: clean gains, pyrrhic gains, broken results, and incomparable results. `goodhart_score` is kept separate to catch suspicious metric gains that are still technically comparable.
+Here is the basic motivation:
 
-That is why the project uses a Chatuskoti-inspired evaluation logic instead of a single binary accept/reject rule.
+| Question | Correct mode | Why |
+| --- | --- | --- |
+| "Paris is the capital of France" | True | Plain factual statement |
+| "Paris is the capital of Germany" | False | Plain factual error |
+| "Light is a wave" | Both | Useful in one frame, incomplete in another |
+| "What is the color of number 7?" | Neither | Ill-posed category error |
+
+Most benchmarks are good at the first two and weak on the latter two. The same failure shows up in research loops: not every "gain" is the same kind of gain.
+
+In this repo, the Chatuskoti idea is not implemented as four hard-coded labels. Instead, it is decomposed into three evaluation axes:
+
+- `truthness`: did the benchmark really improve?
+- `coherence`: is the result internally stable and consistent enough to trust?
+- `comparability`: is the before/after comparison even valid?
+
+Those axes generate the practically important outcome types that binary evaluation collapses together:
+
+- clean gain
+- pyrrhic gain
+- gamed gain
+- broken result
+- incomparable result
+
+`goodhart_score` is kept separate to catch suspicious metric gains that are still technically comparable but likely won through proxy gaming or decoupling.
+
+That is why this project uses a Chatuskoti-inspired evaluation logic instead of a single binary accept/reject rule.
 
 ## Why four states beat binary eval
 
-| Case | What happened | Binary eval | Chatuskoti Evals | Why it matters |
+| Case | What happened | Binary eval | Chatuskoti Eval Framework | Why it matters |
 | --- | --- | --- | --- | --- |
 | Clean gain | Metric improves and internals stay sane | `adopt` | `adopt` | Good changes should still flow through quickly |
 | Pyrrhic gain | Metric rises while instability widens | `adopt` | `hold` | Prevents shipping seductive but unhealthy updates |
@@ -38,6 +62,20 @@ This repo is a benchmark-specific calibrated evaluation framework over `CIFAR-10
 - machine-readable histories, plots, manifests, and markdown reports
 
 It is the evaluation core for a future `Auto Researcher Chatuskoti` loop, not a claim of a fully general autonomous researcher today.
+
+## Future: full Chatuskoti eval benchmark
+
+This repo is not yet a full general-purpose Chatuskoti eval benchmark in the strict sense.
+
+It would cross that line when it has:
+
+1. locked task definitions with strict output schemas
+2. a larger high-quality dataset, including adversarial `both` and `neither` cases
+3. deterministic scoring and formalized rubrics
+4. published baseline model comparisons
+5. clone-and-run reproducibility with stable headline numbers
+
+That is a natural future for this repo. The current version is the benchmark-specific control and evaluation layer that moves in that direction.
 
 ## Strong V1 artifacts
 
@@ -59,7 +97,7 @@ The checked-in bundle is a curated torch-backed benchmark package built from the
 The canonical failure benchmark is the main result to lead with.
 
 - binary evaluation would adopt the pyrrhic, gamed, and incomparable benchmark cases
-- `Chatuskoti Evals` routes those same cases to `hold`, `reject`, and `reframe`
+- `Chatuskoti Eval Framework` routes those same cases to `hold`, `reject`, and `reframe`
 - the damaged failure case is escalated to `rollback`, not just passively rejected
 
 The benchmark-aware `challenge` comparison is companion evidence:
@@ -176,7 +214,7 @@ This project is designed to plug into a broader research loop:
 
 1. an external AR system proposes an intervention
 2. the benchmark runner executes it and emits `RunMetrics`
-3. `Chatuskoti Evals` scores the result as `Vec3 + goodhart_score`
+3. `Chatuskoti Eval Framework` scores the result as `Vec3 + goodhart_score`
 4. the resolver returns `adopt`, `reject`, `hold`, `rollback`, `reframe`, or `keep_going`
 5. history and wisdom feed back into the next proposal
 

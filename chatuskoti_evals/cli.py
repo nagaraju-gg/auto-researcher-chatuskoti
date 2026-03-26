@@ -9,7 +9,7 @@ from chatuskoti_evals.runner import run_ablation_bundle, run_comparison, run_fai
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Chatuskoti Evals prototype")
+    parser = argparse.ArgumentParser(description="Chatuskoti Eval Framework prototype")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     compare = subparsers.add_parser("compare", help="Run both controllers and generate a comparison report")

@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: Chatuskoti Evals
+title: Chatuskoti Eval Framework
 message: "If you use this repository, please cite it using the metadata below."
 type: software
 authors:
@@ -8,7 +8,7 @@ authors:
 repository-code: "https://github.com/nagaraju-gg/chatuskoti-evals"
 license: MIT
 abstract: >-
-  Benchmark-specific calibrated evaluation framework for research outcomes,
+  Benchmark-specific calibrated eval framework for research outcomes,
   including a torch-backed adversarial calibration benchmark over pyrrhic,
   Goodhart-style, broken, and incomparable cases.
 keywords:

@@ -19,7 +19,7 @@ This is the strongest artifact in the repo. It deliberately constructs four benc
 The intended read is simple:
 
 - binary eval would merge several of these cases
-- `Chatuskoti Evals` routes each one differently because they are different kinds of outcomes
+- `Chatuskoti Eval Framework` routes each one differently because they are different kinds of outcomes
 
 ## 2. Challenge comparison
 
