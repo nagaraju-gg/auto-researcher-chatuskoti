@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: Nagaraju
     given-names: Nagaraju
-repository-code: "https://example.com/catuskoti-autoresearcher"
+repository-code: "https://github.com/nagaraju-gg/auto-researcher-chatuskoti"
 license: MIT
 abstract: >-
   Benchmark-specific calibrated prototype for Vec3 automated research evaluation,
@@ -20,4 +20,3 @@ keywords:
   - resnet-18
 version: 0.1.0
 date-released: 2026-03-26
-
