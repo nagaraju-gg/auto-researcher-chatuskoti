@@ -3,9 +3,10 @@ from __future__ import annotations
 import json
 from collections import Counter
 from pathlib import Path
+from statistics import mean, pstdev
 
-from catuskoti_ar.models import BaselineRecord, FailureCaseResult, HistoryEntry, RunMetrics, to_jsonable
-from catuskoti_ar.wisdom import WisdomStore
+from chatuskoti_evals.models import AggregateSummary, BaselineRecord, FailureCaseResult, HistoryEntry, RunMetrics, to_jsonable
+from chatuskoti_evals.wisdom import WisdomStore
 
 
 class ReportGenerator:
@@ -51,7 +52,7 @@ class ReportGenerator:
         write_bar_chart_svg(run_dir / "outcome_regions.svg", "Outcome Regions", dict(octant_counts))
 
         summary_lines = [
-            f"# {controller.upper()} Loop Report",
+            f"# {controller.upper()} Controller Report",
             "",
             f"- Initial baseline metric: `{initial_baseline.metrics.primary_metric:.4f}`",
             f"- Final accepted metric (controller's own eval): `{accepted_series[-1]:.4f}`",
@@ -74,6 +75,20 @@ class ReportGenerator:
                 ]
             )
         (run_dir / "summary.md").write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
+        (run_dir / "aggregate_summary.json").write_text(
+            json.dumps(
+                {
+                    "controller": controller,
+                    "initial_baseline_metric": round(initial_baseline.metrics.primary_metric, 5),
+                    "final_canonical_metric": round(final_canonical_metric, 5),
+                    "non_adopt_actions": sum(1 for entry in history if entry.resolver_action != "adopt"),
+                    "iterations": len(history),
+                },
+                indent=2,
+                sort_keys=True,
+            ),
+            encoding="utf-8",
+        )
         return run_dir
 
     def write_comparison_report(
@@ -189,11 +204,29 @@ class ReportGenerator:
             *interpretation_lines,
         ]
         output.write_text("\n".join(body) + "\n", encoding="utf-8")
+        (self.root / "comparison_summary.json").write_text(
+            json.dumps(
+                {
+                    "mode": mode,
+                    "baseline_metric": round(baseline_metric, 5),
+                    "vec3_final_metric": round(vec3_final_metric, 5),
+                    "binary_final_metric": round(binary_final_metric, 5),
+                    "challenge_divergence_count": len(challenge_divergences),
+                    "challenge_divergences": challenge_divergences,
+                },
+                indent=2,
+                sort_keys=True,
+            ),
+            encoding="utf-8",
+        )
         write_bar_chart_svg(
             self.root / "controller_comparison.svg",
             "Final Accepted Metric",
             {"baseline": baseline_metric, "binary": binary_final_metric, "vec3": vec3_final_metric},
         )
+        if mode == "challenge":
+            write_challenge_table_markdown(self.root / "challenge_cases.md", vec3_history, binary_history)
+            write_challenge_table_svg(self.root / "challenge_cases.svg", vec3_history, binary_history)
         return output
 
     def write_failure_injection_report(
@@ -243,6 +276,35 @@ class ReportGenerator:
             )
         path = output_dir / "summary.md"
         path.write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
+        aggregate = aggregate_failure_results("full", results)
+        (output_dir / "aggregate_summary.json").write_text(
+            json.dumps(to_jsonable(aggregate), indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        return path
+
+    def write_ablation_report(self, output_dir: Path, summaries: list[AggregateSummary]) -> Path:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        rows = [
+            "# Failure Benchmark Ablations",
+            "",
+            "| Ablation | Matched | Mean Metric | Mean Truth | Mean Coherence | Mean Comparability | Mean Goodhart |",
+            "| --- | --- | --- | --- | --- | --- | --- |",
+        ]
+        for summary in summaries:
+            rows.append(
+                f"| `{summary.label}` | `{summary.matched_expectations}/{summary.total_cases}` | "
+                f"`{summary.mean_primary_metric:.4f}` | `{summary.mean_truthness:.3f}` | `{summary.mean_coherence:.3f}` | "
+                f"`{summary.mean_comparability:.3f}` | `{summary.mean_goodhart:.3f}` |"
+            )
+        path = output_dir / "summary.md"
+        path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+        (output_dir / "summary.json").write_text(json.dumps([to_jsonable(item) for item in summaries], indent=2, sort_keys=True), encoding="utf-8")
+        write_bar_chart_svg(
+            output_dir / "ablation_summary.svg",
+            "Matched Failure Cases by Ablation",
+            {summary.label: summary.matched_expectations for summary in summaries},
+        )
         return path
 
 
@@ -274,6 +336,105 @@ def describe_challenge_divergences(vec3_history: list[HistoryEntry], binary_hist
                 f"({', '.join(vec3_entry.run_score.fired_signals) or 'no explicit signals'})"
             )
     return divergences
+
+
+def aggregate_failure_results(label: str, results: list[FailureCaseResult]) -> AggregateSummary:
+    primary_metrics = [item.candidate_metric for item in results]
+    truthnesses = [item.run_score.mean.truthness for item in results]
+    coherences = [item.run_score.mean.coherence for item in results]
+    comparabilities = [item.run_score.mean.comparability for item in results]
+    goodharts = [item.run_score.goodhart_score for item in results]
+    return AggregateSummary(
+        label=label,
+        mean_primary_metric=round(mean(primary_metrics), 5),
+        std_primary_metric=round(pstdev(primary_metrics) if len(primary_metrics) > 1 else 0.0, 5),
+        mean_truthness=round(mean(truthnesses), 5),
+        mean_coherence=round(mean(coherences), 5),
+        mean_comparability=round(mean(comparabilities), 5),
+        mean_goodhart=round(mean(goodharts), 5),
+        matched_expectations=sum(1 for item in results if item.matched_expectation),
+        total_cases=len(results),
+    )
+
+
+def write_challenge_table_markdown(path: Path, vec3_history: list[HistoryEntry], binary_history: list[HistoryEntry]) -> None:
+    lines = [
+        "# Challenge Case Table",
+        "",
+        "| Action | Binary | Vec3 | Signals | Why It Matters |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for vec3_entry, binary_entry in zip(vec3_history, binary_history):
+        if vec3_entry.action_spec.name != binary_entry.action_spec.name:
+            continue
+        lines.append(
+            f"| `{vec3_entry.action_spec.name}` | `{binary_entry.resolver_action}` | `{vec3_entry.resolver_action}` | "
+            f"`{', '.join(vec3_entry.run_score.fired_signals) or 'none'}` | {challenge_reason(vec3_entry)} |"
+        )
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_challenge_table_svg(path: Path, vec3_history: list[HistoryEntry], binary_history: list[HistoryEntry]) -> None:
+    rows = []
+    for vec3_entry, binary_entry in zip(vec3_history, binary_history):
+        if vec3_entry.action_spec.name != binary_entry.action_spec.name:
+            continue
+        rows.append(
+            (
+                vec3_entry.action_spec.name,
+                binary_entry.resolver_action,
+                vec3_entry.resolver_action,
+                ", ".join(vec3_entry.run_score.fired_signals) or "none",
+                challenge_reason(vec3_entry),
+            )
+        )
+    width = 1160
+    height = 140 + 74 * max(len(rows), 1)
+    lines = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        f'<rect width="{width}" height="{height}" fill="#ffffff"/>',
+        '<text x="30" y="28" font-family="Helvetica" font-size="22" font-weight="700">Challenge Comparison Cases</text>',
+        '<text x="30" y="52" font-family="Helvetica" font-size="12" fill="#444">Higher binary metric can come from merging benchmark-aware invalid cases.</text>',
+        '<text x="30" y="84" font-family="Helvetica" font-size="12" font-weight="700">Action</text>',
+        '<text x="220" y="84" font-family="Helvetica" font-size="12" font-weight="700">Binary</text>',
+        '<text x="340" y="84" font-family="Helvetica" font-size="12" font-weight="700">Vec3</text>',
+        '<text x="460" y="84" font-family="Helvetica" font-size="12" font-weight="700">Signals</text>',
+        '<text x="760" y="84" font-family="Helvetica" font-size="12" font-weight="700">Consequence</text>',
+    ]
+    for index, row in enumerate(rows):
+        y = 112 + 58 * index
+        fill = "#f8fafc" if index % 2 == 0 else "#ffffff"
+        lines.extend(
+            [
+                f'<rect x="24" y="{y - 18}" width="1110" height="44" fill="{fill}" stroke="#e5e7eb"/>',
+                f'<text x="30" y="{y}" font-family="Helvetica" font-size="12">{row[0]}</text>',
+                f'<text x="220" y="{y}" font-family="Helvetica" font-size="12">{row[1]}</text>',
+                f'<text x="340" y="{y}" font-family="Helvetica" font-size="12">{row[2]}</text>',
+                f'<text x="460" y="{y}" font-family="Helvetica" font-size="12">{escape_xml(row[3])}</text>',
+                f'<text x="760" y="{y}" font-family="Helvetica" font-size="12">{escape_xml(row[4])}</text>',
+            ]
+        )
+    lines.append("</svg>")
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def challenge_reason(entry: HistoryEntry) -> str:
+    action = entry.resolver_action
+    if action == "hold":
+        return "Pyrrhic gain: metric improved while internals destabilized."
+    if action == "reject" and {"hyper_coherence", "proxy_decoupling"} & set(entry.run_score.fired_signals):
+        return "Goodhart-style gain: metric improved for suspicious reasons."
+    if action == "reject":
+        return "Rejected as a non-improving or unstable change."
+    if action == "reframe":
+        return "Incomparable gain: evaluation regime changed."
+    if action == "rollback":
+        return "Damaged run: controller should actively revert."
+    return "Accepted as a clean change."
+
+
+def escape_xml(text: str) -> str:
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 def write_line_chart_svg(path: Path, title: str, series: dict[str, list[float]]) -> None:
     width = 720

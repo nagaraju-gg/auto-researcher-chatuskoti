@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from catuskoti_ar.models import ActionSpec
+from chatuskoti_evals.models import ActionSpec
 
 
 ACTION_LIBRARY: list[ActionSpec] = [

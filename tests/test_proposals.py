@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import unittest
 
-from catuskoti_ar.proposals import ProposalEngine
-from catuskoti_ar.wisdom import WisdomStore
+from chatuskoti_evals.proposals import ProposalEngine
+from chatuskoti_evals.wisdom import WisdomStore
 
 
 class ProposalTests(unittest.TestCase):

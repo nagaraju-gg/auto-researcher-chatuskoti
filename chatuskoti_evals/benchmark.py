@@ -5,9 +5,9 @@ from hashlib import sha256
 from random import Random
 from typing import Protocol
 
-from catuskoti_ar.config import ExperimentConfig, SimulationConfig
-from catuskoti_ar.models import ActionSpec, BaselineRecord, RunMetrics
-from catuskoti_ar.progress import RunProgressContext, RunProgressTracker
+from chatuskoti_evals.config import ExperimentConfig, SimulationConfig
+from chatuskoti_evals.models import ActionSpec, BaselineRecord, RunMetrics
+from chatuskoti_evals.progress import RunProgressContext, RunProgressTracker
 
 
 class BenchmarkAdapter(Protocol):
@@ -366,7 +366,7 @@ def create_benchmark_adapter(cfg: ExperimentConfig) -> BenchmarkAdapter:
     if cfg.backend == "simulator":
         return SimulatedCIFAR100ResNet18Adapter(cfg.simulation)
     if cfg.backend == "torch":
-        from catuskoti_ar.torch_backend import TorchCIFAR100ResNet18Adapter
+        from chatuskoti_evals.torch_backend import TorchCIFAR100ResNet18Adapter
 
         return TorchCIFAR100ResNet18Adapter(cfg.torch)
     raise ValueError(f"unsupported backend: {cfg.backend}")

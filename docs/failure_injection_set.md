@@ -6,12 +6,12 @@ This is a core part of the benchmark story, not an optional appendix. The failur
 
 ## Injected interventions
 
-- `dropout_high`: pyrrhic win injection
-- `stochastic_depth_high`: Goodhart-style injection
-- `high_lr`: broken failure injection
+- `pyrrhic_probe`: pyrrhic win injection
+- `metric_gaming_probe`: Goodhart-style injection
+- `broken_probe`: broken failure injection
 - `eval_tta`: incomparable evaluation injection
 
-The named cases are defined in [catuskoti_ar/scenarios.py](../catuskoti_ar/scenarios.py).
+The named cases are defined in [chatuskoti_evals/scenarios.py](../chatuskoti_evals/scenarios.py).
 
 ## Canonical demo cases
 
@@ -29,4 +29,4 @@ Claims should stay narrow:
 - evidence on one controlled benchmark
 - deterministic evaluation and interpretability outputs
 
-Avoid broad claims about all automated research systems until the real backend and wider calibration suite exist.
+Avoid broad claims about all automated research systems until the wider calibration suite and broader benchmark coverage exist.

@@ -8,7 +8,6 @@
 
 ## V1 framing
 
-- The first public artifact should describe a `CIFAR-100 + ResNet-18` benchmark with a deterministic simulator standing in for a real training backend.
+- The first public artifact should describe a `CIFAR-100 + ResNet-18` benchmark with a real torch-backed calibration suite and a simulator convenience path.
 - The demo should emphasize that the evaluation method, controller behavior, and richer history are the contribution.
 - Thresholds should be described as benchmark-calibrated defaults, not universal constants.
-

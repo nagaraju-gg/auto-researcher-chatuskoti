@@ -16,7 +16,7 @@ python3 -m pip install -r requirements-torch.txt
 Compare both controllers on the real backend:
 
 ```bash
-python3 -m catuskoti_ar.cli compare \
+python3 -m chatuskoti_evals.cli compare \
   --backend torch \
   --data-dir data \
   --device auto \
@@ -29,7 +29,7 @@ python3 -m catuskoti_ar.cli compare \
 Run a single controller:
 
 ```bash
-python3 -m catuskoti_ar.cli run-loop \
+python3 -m chatuskoti_evals.cli run-loop \
   --controller vec3 \
   --backend torch \
   --data-dir data \

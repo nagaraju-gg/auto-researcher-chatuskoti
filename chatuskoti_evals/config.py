@@ -21,6 +21,32 @@ class DetectorConfig:
     proxy_corr_drop: float = 0.18
     improvement_for_goodhart: float = 0.015
     binary_metric_threshold: float = 0.002
+    enable_coherence: bool = True
+    enable_comparability: bool = True
+    enable_goodhart: bool = True
+    enable_spread_gate: bool = True
+
+
+@dataclass(frozen=True)
+class AblationConfig:
+    name: str = "full"
+    disable_wisdom: bool = False
+
+    def apply(self, detector: DetectorConfig) -> DetectorConfig:
+        updates: dict[str, bool] = {}
+        if self.name == "no_coherence":
+            updates["enable_coherence"] = False
+        elif self.name == "no_comparability":
+            updates["enable_comparability"] = False
+        elif self.name == "no_goodhart":
+            updates["enable_goodhart"] = False
+        elif self.name == "no_spread_gate":
+            updates["enable_spread_gate"] = False
+        return DetectorConfig(**{**detector.__dict__, **updates})
+
+    @property
+    def wisdom_enabled(self) -> bool:
+        return self.name != "no_wisdom"
 
 
 @dataclass(frozen=True)
@@ -78,3 +104,4 @@ class ExperimentConfig:
     detector: DetectorConfig = field(default_factory=DetectorConfig)
     simulation: SimulationConfig = field(default_factory=SimulationConfig)
     torch: TorchBenchmarkConfig = field(default_factory=TorchBenchmarkConfig)
+    ablation: AblationConfig = field(default_factory=AblationConfig)

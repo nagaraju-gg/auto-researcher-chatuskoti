@@ -7,9 +7,9 @@ from hashlib import sha256
 from pathlib import Path
 from statistics import mean
 
-from catuskoti_ar.config import TorchBenchmarkConfig
-from catuskoti_ar.models import ActionSpec, BaselineRecord, RunMetrics
-from catuskoti_ar.progress import RunProgressContext, RunProgressSnapshot, RunProgressTracker
+from chatuskoti_evals.config import TorchBenchmarkConfig
+from chatuskoti_evals.models import ActionSpec, BaselineRecord, RunMetrics
+from chatuskoti_evals.progress import RunProgressContext, RunProgressSnapshot, RunProgressTracker
 
 
 @dataclass(frozen=True)

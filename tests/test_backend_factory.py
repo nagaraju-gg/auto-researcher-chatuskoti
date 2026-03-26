@@ -3,8 +3,8 @@ from __future__ import annotations
 import importlib.util
 import unittest
 
-from catuskoti_ar.benchmark import SimulatedCIFAR100ResNet18Adapter, create_benchmark_adapter
-from catuskoti_ar.config import ExperimentConfig
+from chatuskoti_evals.benchmark import SimulatedCIFAR100ResNet18Adapter, create_benchmark_adapter
+from chatuskoti_evals.config import ExperimentConfig
 
 
 class BackendFactoryTests(unittest.TestCase):

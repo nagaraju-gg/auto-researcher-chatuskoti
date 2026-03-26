@@ -1,6 +1,6 @@
 # Release Checklist
 
-Use this checklist before treating the repo as a public benchmark release.
+Use this checklist before treating the repo as a public `Chatuskoti Evals` benchmark release.
 
 ## Positioning
 
@@ -10,16 +10,19 @@ Use this checklist before treating the repo as a public benchmark release.
 
 ## Required artifacts
 
-- Canonical benchmark report: [summary.md](../artifacts/torch_failure_set_e10_v5/failure_injection/summary.md)
-- Figure: [benchmark_figure.svg](../artifacts/torch_failure_set_e10_v5/failure_injection/benchmark_figure.svg)
-- Figure caption: [benchmark_figure_caption.md](../artifacts/torch_failure_set_e10_v5/failure_injection/benchmark_figure_caption.md)
+- Canonical benchmark report: [summary.md](../artifacts/strong_v1/canonical_failure/failure_injection/summary.md)
+- Figure: [benchmark_figure.svg](../artifacts/strong_v1/canonical_failure/failure_injection/benchmark_figure.svg)
+- Figure caption: [benchmark_figure_caption.md](../artifacts/strong_v1/canonical_failure/failure_injection/benchmark_figure_caption.md)
+- Challenge comparison: [comparison.md](../artifacts/strong_v1/challenge_compare/comparison.md)
+- Ablation summary: [summary.md](../artifacts/strong_v1/ablations/summary.md)
 - Paper-ready section: [paper_figure_1.md](paper_figure_1.md)
 - Claims and limitations note: [canonical_failure_benchmark.md](canonical_failure_benchmark.md)
 
 ## Repo hygiene
 
 - `python3 -m unittest discover -s tests -v`
-- `python3 scripts/generate_failure_figure.py artifacts/torch_failure_set_e10_v5/failure_injection/failure_results.json`
+- `python3 scripts/generate_failure_figure.py artifacts/strong_v1/canonical_failure/failure_injection/failure_results.json`
+- Be explicit about whether you are referencing the checked-in curated bundle or a freshly regenerated `3`-seed bundle.
 - Confirm the README points to the canonical benchmark artifact first.
 - Avoid committing local environment files, `.DS_Store`, and transient artifacts unless they are intentional benchmark outputs.
 
@@ -40,5 +43,4 @@ Avoid:
 ## Nice-to-have before public release
 
 - A single top-level demo page or notebook that links the benchmark figure and result table
-- A short roadmap for strengthening the open-loop controller comparison
-- A license file and explicit citation metadata, if the repo is going public beyond a private draft audience
+- A short roadmap for broadening beyond the current benchmark

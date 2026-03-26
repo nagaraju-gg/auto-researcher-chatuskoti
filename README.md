@@ -1,223 +1,196 @@
 # Chatuskoti Evals
 
-This repository implements a benchmark-specific calibrated evaluation prototype for `Vec3` research outcomes: `truthness`, `coherence`, and `comparability`, plus a separate `goodhart_score`.
+Most research loops still make one brittle decision: metric up means ship, metric down means reject.
 
-`Chatuskoti Evals` is the evaluation core for a future autonomous research loop, not a claim of a fully general AutoResearcher today.
+`Chatuskoti Evals` starts from a simpler claim: not every gain is the same kind of gain. A reported improvement can be:
 
-## Current status
+- clean: the benchmark improved and internals stayed healthy
+- pyrrhic: the metric improved, but training dynamics degraded
+- gamed: the metric improved for suspicious proxy-breaking reasons
+- broken: the change damaged the system badly enough that rollback is the right action
+- incomparable: the evaluation regime changed, so the before/after comparison is invalid
 
-The strongest current result in this repo is the torch-backed adversarial calibration benchmark, not the open-loop controller runs.
+That is why the project uses a four-state evaluation logic around `truthness`, `coherence`, `comparability`, plus a separate `goodhart_score`, instead of a single binary accept/reject rule.
 
-- canonical benchmark summary: [summary.md](artifacts/torch_failure_set_e10_v5/failure_injection/summary.md)
-- benchmark figure: [benchmark_figure.svg](artifacts/torch_failure_set_e10_v5/failure_injection/benchmark_figure.svg)
-- paper-ready section: [paper_figure_1.md](docs/paper_figure_1.md)
+## Why four states beat binary eval
 
-Headline result:
+| Case | What happened | Binary eval | Chatuskoti Evals | Why it matters |
+| --- | --- | --- | --- | --- |
+| Clean gain | Metric improves and internals stay sane | `adopt` | `adopt` | Good changes should still flow through quickly |
+| Pyrrhic gain | Metric rises while instability widens | `adopt` | `hold` | Prevents shipping seductive but unhealthy updates |
+| Gamed gain | Metric rises while proxy alignment collapses | `adopt` | `reject` | Catches Goodhart-style false positives |
+| Broken result | Metric drops and internals are damaged | `reject` | `rollback` | Separates passive rejection from active damage control |
+| Incomparable gain | Eval protocol changed | `adopt` | `reframe` | Stops invalid leaderboard wins from being treated as real progress |
 
-- `4/4` benchmark expectations matched
-- `binary` would adopt `3/4` adversarial cases
-- `Vec3` would adopt `0/4`
+The point is not “more philosophy.” The point is that a single number often throws away the structure that tells you what to do next.
 
-The prototype is deliberately narrow:
+## What this repo proves today
 
-- benchmark target: `CIFAR-100 + ResNet-18`
-- implementation mode: deterministic simulation with `PyTorch`-shaped metrics
-- proposal space: typed interventions only
-- controllers: `binary` and `vec3`
-- outputs: JSONL history, per-seed metrics, SVG plots, Markdown summaries
+This repo is a benchmark-specific calibrated evaluation framework over `CIFAR-100 + ResNet-18`, with:
 
-The reports distinguish between:
+- typed intervention proposals
+- deterministic `Vec3` scoring
+- explicit resolver actions: `adopt`, `reject`, `hold`, `rollback`, `reframe`, `keep_going`
+- machine-readable histories, plots, manifests, and markdown reports
 
-- controller eval metric: what the controller would have accepted in its own loop
-- canonical benchmark metric: the anchored comparison metric used to compare controllers fairly
+It is the evaluation core for a future `Auto Researcher Chatuskoti` loop, not a claim of a fully general autonomous researcher today.
 
-## Failure injection set
+## Strong V1 artifacts
 
-The repo now treats detector stress tests as a first-class artifact.
+The public-facing evidence bundle is organized under [artifacts/strong_v1](artifacts/strong_v1).
 
-- We include deliberately adversarial interventions to stress-test detectors.
-- The named failure injection set lives in [catuskoti_ar/scenarios.py](catuskoti_ar/scenarios.py).
-- The goal is to prove that `Vec3` distinguishes clean wins from pyrrhic, Goodhart, broken, and incomparable outcomes under a controlled benchmark-specific setup.
+The checked-in bundle is a curated torch-backed benchmark package built from the strongest current saved runs in the repo. The release script regenerates the same bundle in a stronger `3`-seed form on a faster machine.
 
-## Canonical demo cases
+- canonical failure benchmark: [summary.md](artifacts/strong_v1/canonical_failure/failure_injection/summary.md)
+- canonical figure: [benchmark_figure.svg](artifacts/strong_v1/canonical_failure/failure_injection/benchmark_figure.svg)
+- challenge comparison: [comparison.md](artifacts/strong_v1/challenge_compare/comparison.md)
+- challenge case table: [challenge_cases.md](artifacts/strong_v1/challenge_compare/challenge_cases.md)
+- ablation summary: [summary.md](artifacts/strong_v1/ablations/summary.md)
+- artifact landing page: [index.md](artifacts/index.md)
+- plain-language explanation: [why_four_states.md](docs/why_four_states.md)
+- guided walkthrough: [demo.md](docs/demo.md)
 
-These are the three paper/demo anchor cases hard-coded into the repo metadata:
+## Current headline
 
-- pyrrhic win example
-- Goodhart example
-- recovery via Vec3 history
+The canonical failure benchmark is the main result to lead with.
 
-They are defined in [catuskoti_ar/scenarios.py](catuskoti_ar/scenarios.py) and are intended to become the core figures for the paper and demo.
+- binary evaluation would adopt the pyrrhic, gamed, and incomparable benchmark cases
+- `Chatuskoti Evals` routes those same cases to `hold`, `reject`, and `reframe`
+- the damaged failure case is escalated to `rollback`, not just passively rejected
 
-## Interpretability outputs
+The benchmark-aware `challenge` comparison is companion evidence:
 
-For every decision the history now logs:
-
-- which detector signals fired
-- the resolver action
-- the explicit resolver reason string that explains why that action was chosen
-
-This makes the generated `history.jsonl` and `summary.md` reviewer-friendly instead of leaving decisions implicit.
-
-## Scope and claims
-
-This should be presented as a benchmark-specific calibrated prototype.
-
-- Do claim deterministic evaluation, richer history, and reproducible benchmark evidence.
-- Do not claim general validity across all automated research systems yet.
-
-## Why a simulator?
-
-This workspace does not have `torch`, `torchvision`, or plotting packages installed, so the first implementation is a self-contained stdlib simulation that preserves the control-flow and detector logic. The adapter boundary is explicit, so a real training adapter can replace the simulator later without changing the loop, resolver, reporting, or tests.
+- binary can post the higher metric by accepting benchmark-aware invalid merges
+- `Vec3` preserves structural validity even when that means refusing superficially better numbers
 
 ## Quickstart
 
-Fastest way to see the strongest result:
-
-```bash
-.venv/bin/python -m catuskoti_ar.cli run-failure-set --backend torch --epochs 10 --seeds 1 --num-workers 0 --output artifacts/torch_failure_set_e10_v5
-python3 scripts/generate_failure_figure.py artifacts/torch_failure_set_e10_v5/failure_injection/failure_results.json
-```
-
-Run the side-by-side demo:
-
-```bash
-python3 -m catuskoti_ar.cli compare --output artifacts/demo_run
-```
-
-Run the stronger benchmark-aware open-loop comparison:
-
-```bash
-python3 -m catuskoti_ar.cli compare --mode challenge --output artifacts/challenge_compare
-```
-
-Run against the real PyTorch backend on a machine with `torch` installed:
-
-```bash
-python3 -m catuskoti_ar.cli compare --backend torch --epochs 30 --output artifacts/torch_compare
-```
-
-Check the machine first:
+Environment check:
 
 ```bash
 .venv/bin/python scripts/check_torch_env.py
 ```
 
-Or use the prepared wrapper:
+Regenerate the strongest real benchmark:
 
 ```bash
-bash scripts/run_torch_smoke.sh
+.venv/bin/python -m chatuskoti_evals.cli run-failure-set \
+  --backend torch \
+  --epochs 10 \
+  --seeds 3 \
+  --num-workers 0 \
+  --output artifacts/strong_v1/canonical_failure
 ```
 
-Then move to:
+Generate the canonical figure:
 
 ```bash
-bash scripts/run_torch_compare.sh
+python3 scripts/generate_failure_figure.py \
+  artifacts/strong_v1/canonical_failure/failure_injection/failure_results.json
 ```
 
-`run_torch_smoke.sh` is the true first-run check. `run_torch_compare.sh` is much heavier because it runs both controllers across multiple iterations and seeds.
-
-Run one controller only:
+Run the benchmark-aware open-loop companion:
 
 ```bash
-python3 -m catuskoti_ar.cli run-loop --controller vec3 --output artifacts/vec3_only
+.venv/bin/python -m chatuskoti_evals.cli compare \
+  --mode challenge \
+  --backend torch \
+  --epochs 10 \
+  --iterations 4 \
+  --seeds 3 \
+  --num-workers 0 \
+  --output artifacts/strong_v1/challenge_compare
 ```
 
-Run the named failure-injection set:
+Run the failure-benchmark ablation sweep:
 
 ```bash
-python3 -m catuskoti_ar.cli run-failure-set --output artifacts/failure_set
+.venv/bin/python -m chatuskoti_evals.cli run-ablation \
+  --backend torch \
+  --epochs 10 \
+  --seeds 3 \
+  --num-workers 0 \
+  --output artifacts/strong_v1/ablations
 ```
 
-On the torch backend, the failure-injection set now includes explicit adversarial probes for:
+Or regenerate the whole release bundle:
 
-- pyrrhic behavior
-- metric-gaming / Goodhart-like behavior
-- broken failure
-- incomparable evaluation
+```bash
+bash scripts/run_torch_release_bundle.sh
+```
 
-Run the test suite:
+## What gets written
+
+Each controller or benchmark bundle emits:
+
+- `history.jsonl`
+- `seed_metrics.json`
+- `summary.md`
+- SVG plots
+- aggregate summaries
+- `manifest.json`
+
+The stronger public bundles also emit:
+
+- challenge case tables
+- benchmark figures
+- ablation summaries
+- top-level artifact index pages
+
+## Package and CLI
+
+The Python package is now `chatuskoti_evals`.
+
+- module entrypoint: `python -m chatuskoti_evals.cli`
+- project name: `chatuskoti-evals`
+
+The most useful commands are:
+
+- `compare`
+- `run-loop`
+- `run-failure-set`
+- `run-ablation`
+
+## Scope and claims
+
+This repo should be presented as:
+
+- benchmark-specific
+- calibrated to `CIFAR-100 + ResNet-18`
+- evaluation-first
+- reproducible and interpretable
+
+This repo should not yet be presented as:
+
+- a general automated researcher
+- universally calibrated across domains
+- proof that `Vec3` always beats binary controllers on any benchmark
+
+## Future AR integration
+
+This project is designed to plug into a broader research loop:
+
+1. an external AR system proposes an intervention
+2. the benchmark runner executes it and emits `RunMetrics`
+3. `Chatuskoti Evals` scores the result as `Vec3 + goodhart_score`
+4. the resolver returns `adopt`, `reject`, `hold`, `rollback`, `reframe`, or `keep_going`
+5. history and wisdom feed back into the next proposal
+
+That future system is the right place for `Auto Researcher Chatuskoti`. This repo is the eval layer that makes such a loop safer and more legible.
+
+## Repo structure
+
+- [chatuskoti_evals/benchmark.py](chatuskoti_evals/benchmark.py)
+- [chatuskoti_evals/scoring.py](chatuskoti_evals/scoring.py)
+- [chatuskoti_evals/resolver.py](chatuskoti_evals/resolver.py)
+- [chatuskoti_evals/proposals.py](chatuskoti_evals/proposals.py)
+- [chatuskoti_evals/reporting.py](chatuskoti_evals/reporting.py)
+- [docs/why_four_states.md](docs/why_four_states.md)
+- [docs/demo.md](docs/demo.md)
+- [docs/release_checklist.md](docs/release_checklist.md)
+
+## Test suite
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
-
-## What gets generated
-
-Each controller writes:
-
-- `history.jsonl`
-- `seed_metrics.json`
-- `wisdom.json`
-- `summary.md`
-- `metric_trajectory.svg`
-- `action_counts.svg`
-- `outcome_regions.svg`
-
-The comparison report uses the canonical benchmark metric so that a controller cannot "win" just by adopting an incomparable evaluation regime.
-
-You can also run a calibration loop that deliberately tries adversarial actions first:
-
-```bash
-python3 -m catuskoti_ar.cli run-loop --controller vec3 --mode calibration --output artifacts/vec3_calibration
-```
-
-For open-loop comparison, `challenge` mode is the better current narrative than the plain default loop because it runs both controllers through the same benchmark-aware action schedule and makes the divergence easier to interpret.
-
-## Canonical benchmark artifact
-
-The strongest current project artifact is the torch-backed adversarial calibration benchmark:
-
-- canonical run summary: [summary.md](artifacts/torch_failure_set_e10_v5/failure_injection/summary.md)
-- benchmark figure: [benchmark_figure.svg](artifacts/torch_failure_set_e10_v5/failure_injection/benchmark_figure.svg)
-- benchmark caption: [benchmark_figure_caption.md](artifacts/torch_failure_set_e10_v5/failure_injection/benchmark_figure_caption.md)
-- paper-ready condensation: [paper_ready_summary.md](artifacts/torch_failure_set_e10_v5/failure_injection/paper_ready_summary.md)
-- paper/demo figure section: [paper_figure_1.md](docs/paper_figure_1.md)
-- claims and limitations note: [canonical_failure_benchmark.md](docs/canonical_failure_benchmark.md)
-- release checklist: [release_checklist.md](docs/release_checklist.md)
-- license: [LICENSE](LICENSE)
-- citation metadata: [CITATION.cff](CITATION.cff)
-
-## Real backend
-
-The repo now includes a lazy-loaded real backend in [catuskoti_ar/torch_backend.py](catuskoti_ar/torch_backend.py).
-
-- Default backend: `simulator`
-- Real backend: `torch`
-- Install file: [requirements-torch.txt](requirements-torch.txt)
-- Setup notes: [docs/real_backend.md](docs/real_backend.md)
-
-The torch backend is intentionally lazy-loaded so the simulator path and test suite still work in environments that do not have `torch` or `torchvision` installed.
-
-On the torch path:
-
-- `stochastic_depth_*` uses residual drop-path on the ResNet blocks
-- `dropout_high` is a separate classifier-dropout stress action
-
-The operational handoff is documented in [docs/next_steps.md](docs/next_steps.md).
-
-## Expected runtime and cost
-
-Current stdlib simulator in this repo:
-
-- runtime: under 1 minute on a laptop for `compare`
-- GPU cost: none
-
-Planned real `CIFAR-100 + ResNet-18` backend estimate for the same narrative artifact:
-
-- detector calibration pass: roughly `3-5 GPU hours`
-- one `binary` vs `vec3` comparison run at 4 iterations and 3 seeds: roughly `6-10 GPU hours`
-- total first evidence pass: roughly `10-16 GPU hours` on a single mid-range GPU class machine
-
-The comparison run also writes:
-
-- `comparison.md`
-- `controller_comparison.svg`
-
-## Repo structure
-
-- [catuskoti_ar/benchmark.py](catuskoti_ar/benchmark.py)
-- [catuskoti_ar/scoring.py](catuskoti_ar/scoring.py)
-- [catuskoti_ar/resolver.py](catuskoti_ar/resolver.py)
-- [catuskoti_ar/proposals.py](catuskoti_ar/proposals.py)
-- [catuskoti_ar/reporting.py](catuskoti_ar/reporting.py)

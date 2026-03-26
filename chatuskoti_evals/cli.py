@@ -4,8 +4,8 @@ import argparse
 from dataclasses import replace
 from pathlib import Path
 
-from catuskoti_ar.config import ExperimentConfig, LoopConfig
-from catuskoti_ar.runner import run_comparison, run_failure_injection_set, run_single_loop
+from chatuskoti_evals.config import AblationConfig, ExperimentConfig, LoopConfig
+from chatuskoti_evals.runner import run_ablation_bundle, run_comparison, run_failure_injection_set, run_single_loop
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -25,6 +25,10 @@ def build_parser() -> argparse.ArgumentParser:
     failure_set.add_argument("--output", type=Path, default=Path("artifacts/failure_set"))
     add_backend_args(failure_set)
 
+    run_ablation = subparsers.add_parser("run-ablation", help="Run the canonical failure benchmark ablation bundle")
+    run_ablation.add_argument("--output", type=Path, default=Path("artifacts/ablation_bundle"))
+    add_backend_args(run_ablation)
+
     return parser
 
 
@@ -39,6 +43,11 @@ def add_backend_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--iterations", type=int, default=4)
     parser.add_argument("--seeds", type=int, default=3)
     parser.add_argument("--mode", choices=["default", "calibration", "challenge"], default="default")
+    parser.add_argument(
+        "--ablation",
+        choices=["full", "no_coherence", "no_comparability", "no_goodhart", "no_wisdom", "no_spread_gate"],
+        default="full",
+    )
 
 
 def build_config(args: argparse.Namespace) -> ExperimentConfig:
@@ -52,7 +61,9 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         eval_batch_size=args.eval_batch_size,
         num_workers=args.num_workers,
     )
-    return replace(cfg, backend=args.backend, torch=torch_cfg)
+    ablation_cfg = AblationConfig(name=args.ablation)
+    detector_cfg = ablation_cfg.apply(cfg.detector)
+    return replace(cfg, backend=args.backend, torch=torch_cfg, detector=detector_cfg, ablation=ablation_cfg)
 
 
 def main() -> None:
@@ -76,6 +87,10 @@ def main() -> None:
         if args.command == "run-failure-set":
             results = run_failure_injection_set(args.output, cfg, seeds=args.seeds)
             print(f"Wrote failure injection artifacts to {args.output} ({len(results)} cases)")
+            return
+        if args.command == "run-ablation":
+            summaries = run_ablation_bundle(args.output, cfg, seeds=args.seeds)
+            print(f"Wrote ablation bundle to {args.output} ({len(summaries)} variants)")
             return
     except ImportError as exc:
         parser.exit(status=1, message=f"{exc}\n")

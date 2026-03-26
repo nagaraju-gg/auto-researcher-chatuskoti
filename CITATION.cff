@@ -8,9 +8,9 @@ authors:
 repository-code: "https://github.com/nagaraju-gg/auto-researcher-chatuskoti"
 license: MIT
 abstract: >-
-  Benchmark-specific calibrated prototype for Vec3 automated research evaluation,
+  Benchmark-specific calibrated evaluation framework for research outcomes,
   including a torch-backed adversarial calibration benchmark over pyrrhic,
-  Goodhart-style, broken, and incomparable outcomes.
+  Goodhart-style, broken, and incomparable cases.
 keywords:
   - automated research
   - evaluation

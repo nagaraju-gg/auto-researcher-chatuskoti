@@ -3,8 +3,8 @@ from __future__ import annotations
 import math
 from statistics import mean, stdev
 
-from catuskoti_ar.config import DetectorConfig
-from catuskoti_ar.models import RunMetrics, RunScore, SeedScore, Vec3
+from chatuskoti_evals.config import DetectorConfig
+from chatuskoti_evals.models import RunMetrics, RunScore, SeedScore, Vec3
 
 
 def score_run_metrics(
@@ -94,7 +94,7 @@ def score_single_seed(
     if not all(map(math.isfinite, [candidate.train_loss, candidate.val_loss, candidate.primary_metric])):
         fired_signals.append("nan_loss")
         negative_penalty = max(negative_penalty, 1.0)
-    if gap_ratio > cfg.gap_multiplier and metric_delta > -0.01:
+    if cfg.enable_coherence and gap_ratio > cfg.gap_multiplier and metric_delta > -0.01:
         fired_signals.append("instability_gap")
         negative_penalty = max(negative_penalty, 0.78)
     corroborated_grad_damage = (
@@ -105,10 +105,10 @@ def score_single_seed(
             or metric_delta <= 0.0
         )
     )
-    if corroborated_grad_damage:
+    if cfg.enable_coherence and corroborated_grad_damage:
         fired_signals.append("exploding_gradients")
         negative_penalty = max(negative_penalty, 0.92)
-    if grad_std_ratio > cfg.grad_std_multiplier:
+    if cfg.enable_coherence and grad_std_ratio > cfg.grad_std_multiplier:
         fired_signals.append("loss_instability")
         negative_penalty = max(negative_penalty, 0.68)
 
@@ -123,7 +123,9 @@ def score_single_seed(
         coherence = min(coherence_bonus, 0.78)
 
     comparability = 0.75
-    if candidate.eval_hash != baseline.eval_hash:
+    if not cfg.enable_comparability:
+        comparability = 0.75
+    elif candidate.eval_hash != baseline.eval_hash:
         fired_signals.append("eval_regime_changed")
         comparability = -1.0
     elif candidate.model_family != baseline.model_family:
@@ -134,10 +136,10 @@ def score_single_seed(
         comparability = -0.9
 
     goodhart_score = 0.0
-    if metric_delta >= cfg.improvement_for_goodhart and grad_std_ratio < cfg.hypercoherence_ratio:
+    if cfg.enable_goodhart and metric_delta >= cfg.improvement_for_goodhart and grad_std_ratio < cfg.hypercoherence_ratio:
         fired_signals.append("hyper_coherence")
         goodhart_score = max(goodhart_score, 0.72)
-    if metric_delta >= cfg.improvement_for_goodhart and proxy_corr_delta < -cfg.proxy_corr_drop:
+    if cfg.enable_goodhart and metric_delta >= cfg.improvement_for_goodhart and proxy_corr_delta < -cfg.proxy_corr_drop:
         fired_signals.append("proxy_decoupling")
         goodhart_score = max(goodhart_score, 0.84)
 

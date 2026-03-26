@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from catuskoti_ar.config import DetectorConfig
-from catuskoti_ar.models import Resolution, RunMetrics, RunScore
+from chatuskoti_evals.config import DetectorConfig
+from chatuskoti_evals.models import Resolution, RunMetrics, RunScore
 
 
 def resolve_vec3(run_score: RunScore, cfg: DetectorConfig) -> Resolution:
@@ -11,24 +11,24 @@ def resolve_vec3(run_score: RunScore, cfg: DetectorConfig) -> Resolution:
 
     if run_score.mag < cfg.min_magnitude:
         return Resolution("keep_going", f"signal magnitude {run_score.mag:.3f} is below minimum {cfg.min_magnitude:.3f}")
-    if run_score.spread > cfg.max_spread:
+    if cfg.enable_spread_gate and run_score.spread > cfg.max_spread:
         return Resolution("keep_going", f"seed spread {run_score.spread:.3f} exceeds maximum {cfg.max_spread:.3f}")
-    if run_score.goodhart_score >= cfg.goodhart_threshold and t > cfg.adopt_truth_threshold:
+    if cfg.enable_goodhart and run_score.goodhart_score >= cfg.goodhart_threshold and t > cfg.adopt_truth_threshold:
         return Resolution(
             "reject",
             f"goodhart_score {run_score.goodhart_score:.3f} exceeds threshold {cfg.goodhart_threshold:.3f} while truthness is positive",
         )
-    if t > cfg.adopt_truth_threshold and c <= -cfg.incoherence_threshold:
+    if cfg.enable_coherence and t > cfg.adopt_truth_threshold and c <= -cfg.incoherence_threshold:
         return Resolution(
             "hold",
             f"truthness {t:.3f} is positive but coherence {c:.3f} is below -{cfg.incoherence_threshold:.3f}",
         )
-    if t < cfg.reject_truth_threshold and c <= -cfg.incoherence_threshold:
+    if cfg.enable_coherence and t < cfg.reject_truth_threshold and c <= -cfg.incoherence_threshold:
         return Resolution(
             "rollback",
             f"truthness {t:.3f} is below {cfg.reject_truth_threshold:.3f} and coherence {c:.3f} indicates damage",
         )
-    if k <= -cfg.comparability_threshold:
+    if cfg.enable_comparability and k <= -cfg.comparability_threshold:
         return Resolution(
             "reframe",
             f"comparability {k:.3f} is below -{cfg.comparability_threshold:.3f}; baseline comparison is not valid",

@@ -8,7 +8,7 @@ else
   PYTHON_BIN="python3"
 fi
 
-"$PYTHON_BIN" -m catuskoti_ar.cli compare \
+"$PYTHON_BIN" -m chatuskoti_evals.cli compare \
   --backend torch \
   --data-dir data \
   --device auto \

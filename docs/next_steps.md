@@ -1,6 +1,6 @@
 # Next Steps
 
-This repo is prepared for the first real benchmark run, but that run must happen on a machine with `torch` and `torchvision` installed.
+This repo is already organized around a strong-v1 public bundle. The next step is to regenerate or extend that bundle on a machine with `torch` and `torchvision` installed.
 
 ## 1. Prepare the machine
 
@@ -37,67 +37,88 @@ This uses:
 
 If that succeeds, move to the real comparison.
 
-## 3. Run the first real comparison
+## 3. Run the strong-v1 bundle
 
 Use the prepared wrapper:
 
 ```bash
-bash scripts/run_torch_compare.sh
+bash scripts/run_torch_release_bundle.sh
 ```
 
-That wrapper is intentionally a lighter real-comparison profile for first contact:
+That script generates:
 
-- `10` epochs, not `30`
-- `num_workers=0`, which is safer on Apple Silicon / MPS
-- progress is printed every epoch so you can tell the run is alive
-- it prefers `.venv/bin/python` automatically, so it avoids shell/path confusion
- - it still runs `4` iterations and `3` seeds, so it is much heavier than the smoke test
+- `artifacts/strong_v1/canonical_failure`
+- `artifacts/strong_v1/challenge_compare`
+- `artifacts/strong_v1/ablations`
 
-Or run directly:
+## 4. Or run the main pieces directly
+
+If you want to run pieces one at a time:
 
 ```bash
-.venv/bin/python -m catuskoti_ar.cli compare \
+.venv/bin/python -m chatuskoti_evals.cli run-failure-set \
   --backend torch \
   --epochs 10 \
+  --seeds 3 \
   --num-workers 0 \
-  --output artifacts/torch_compare
+  --output artifacts/strong_v1/canonical_failure
+```
+
+```bash
+.venv/bin/python -m chatuskoti_evals.cli compare \
+  --mode challenge \
+  --backend torch \
+  --epochs 10 \
+  --iterations 4 \
+  --seeds 3 \
+  --num-workers 0 \
+  --output artifacts/strong_v1/challenge_compare
+```
+
+```bash
+.venv/bin/python -m chatuskoti_evals.cli run-ablation \
+  --backend torch \
+  --epochs 10 \
+  --seeds 3 \
+  --num-workers 0 \
+  --output artifacts/strong_v1/ablations
 ```
 
 Expected outputs:
 
-- `artifacts/torch_compare/vec3/summary.md`
-- `artifacts/torch_compare/binary/summary.md`
-- `artifacts/torch_compare/comparison.md`
-- JSONL history, per-seed metrics, and SVG charts
+- `artifacts/strong_v1/canonical_failure/failure_injection/summary.md`
+- `artifacts/strong_v1/challenge_compare/comparison.md`
+- `artifacts/strong_v1/ablations/summary.md`
+- JSON manifests, per-seed metrics, and SVG charts
 
 If the smoke test succeeds and the machine is CUDA-capable, then scale up to `--epochs 30`.
 
-## 4. Check the first evidence gate
+## 5. Check the evidence gate
 
 Do not call it publish-ready yet unless all are true:
 
-- `Vec3` beats `binary` on the canonical benchmark metric
-- at least one Goodhart or pyrrhic case is clearly rejected by `Vec3` and accepted by `binary`
-- the failure-injection set still behaves as expected under the real backend
+- the canonical failure benchmark matches all intended branches
+- binary still adopts pyrrhic, Goodhart-style, and incomparable benchmark cases that `Vec3` blocks
+- the challenge comparison still shows structural invalid merges being accepted by binary
+- the ablation summary weakens in the expected directions
 - outputs are reproducible across reruns within a reasonable tolerance band
 
-## 5. Tighten before publishing
+## 6. Tighten before publishing
 
 After the first run, inspect and likely refine:
 
 - threshold calibration in the detector config
-- torch-side failure-injection probes and calibration thresholds, if the benchmark behavior drifts
+- failure probes and challenge-mode behavior, if the benchmark behavior drifts
 - paper wording so claims match real evidence rather than simulator behavior
 
-## 6. Minimum publish package
+## 7. Minimum publish package
 
 For a credible first public drop, include:
 
 - the repo
 - exact run command
-- one saved canonical run
-- three core figures:
-  - pyrrhic win
-  - Goodhart case
-  - recovery via Vec3 history
-- one short limitations section that says this is a benchmark-specific calibrated prototype
+- one saved strong-v1 bundle
+- the canonical failure figure
+- the challenge comparison table
+- the ablation summary
+- one short limitations section that says this is a benchmark-specific calibrated evaluation framework

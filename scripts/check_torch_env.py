@@ -5,7 +5,7 @@ import sys
 
 
 def main() -> int:
-    print("Environment check for Catuskoti AutoResearcher torch backend")
+    print("Environment check for Chatuskoti Evals torch backend")
     print(f"Python: {sys.version.split()[0]}")
     print(f"Platform: {platform.platform()}")
 
@@ -38,4 +38,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

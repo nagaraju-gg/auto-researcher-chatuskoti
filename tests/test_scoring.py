@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import unittest
 
-from catuskoti_ar.config import DetectorConfig
-from catuskoti_ar.models import RunMetrics
-from catuskoti_ar.resolver import resolve_vec3
-from catuskoti_ar.scoring import score_run_metrics
+from chatuskoti_evals.config import DetectorConfig
+from chatuskoti_evals.models import RunMetrics
+from chatuskoti_evals.resolver import resolve_vec3
+from chatuskoti_evals.scoring import score_run_metrics
 
 
 def make_metrics(

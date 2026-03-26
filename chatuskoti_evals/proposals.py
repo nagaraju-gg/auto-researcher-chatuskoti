@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from catuskoti_ar.actions import ACTION_LIBRARY
-from catuskoti_ar.models import ActionSpec, HistoryEntry
-from catuskoti_ar.wisdom import WisdomStore
+from chatuskoti_evals.actions import ACTION_LIBRARY
+from chatuskoti_evals.models import ActionSpec, HistoryEntry
+from chatuskoti_evals.wisdom import WisdomStore
 
 
 class ProposalEngine:

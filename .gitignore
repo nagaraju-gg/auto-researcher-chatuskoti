@@ -7,4 +7,7 @@ artifacts/*
 !artifacts/torch_failure_set_e10_v5/**
 !artifacts/torch_challenge_compare_v3/
 !artifacts/torch_challenge_compare_v3/**
+!artifacts/strong_v1/
+!artifacts/strong_v1/**
+!artifacts/index.md
 .DS_Store

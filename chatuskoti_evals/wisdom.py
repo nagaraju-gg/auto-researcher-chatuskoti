@@ -4,7 +4,7 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-from catuskoti_ar.models import RunScore, Vec3
+from chatuskoti_evals.models import RunScore, Vec3
 
 
 class WisdomStore:

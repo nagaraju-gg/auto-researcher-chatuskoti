@@ -4,8 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from catuskoti_ar.models import RunScore, Vec3
-from catuskoti_ar.wisdom import WisdomStore
+from chatuskoti_evals.models import RunScore, Vec3
+from chatuskoti_evals.wisdom import WisdomStore
 
 
 class WisdomTests(unittest.TestCase):

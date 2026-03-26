@@ -4,8 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from catuskoti_ar.config import ExperimentConfig
-from catuskoti_ar.runner import run_comparison
+from chatuskoti_evals.config import ExperimentConfig
+from chatuskoti_evals.runner import run_comparison
 
 
 class RunnerTests(unittest.TestCase):

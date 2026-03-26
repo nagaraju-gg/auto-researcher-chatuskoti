@@ -2,10 +2,13 @@
 
 This document captures the strongest current benchmark artifact for the project:
 
-- source run: [summary.md](../artifacts/torch_failure_set_e10_v5/failure_injection/summary.md)
+- source run: [summary.md](../artifacts/strong_v1/canonical_failure/failure_injection/summary.md)
 - benchmark type: explicit adversarial calibration suite
 - backend: torch
-- budget: `10` epochs, `1` seed, `num_workers=0`
+- checked-in artifact budget: `10` epochs, `1` seed, `num_workers=0`
+- release-target regeneration budget: `10` epochs, `3` seeds, `num_workers=0`
+
+This document refers to the checked-in canonical artifact in the repo today. The release bundle script is set up to regenerate the same benchmark in the stronger `3`-seed configuration on a faster machine.
 
 ## Core result
 

@@ -100,6 +100,32 @@ class FailureCaseResult:
     matched_expectation: bool
 
 
+@dataclass(frozen=True)
+class BundleManifest:
+    bundle_name: str
+    artifact_kind: str
+    benchmark: str
+    backend: str
+    seeds: int
+    epochs: int
+    controller_mode: str
+    ablation: str
+    artifact_paths: dict[str, str]
+
+
+@dataclass(frozen=True)
+class AggregateSummary:
+    label: str
+    mean_primary_metric: float
+    std_primary_metric: float
+    mean_truthness: float
+    mean_coherence: float
+    mean_comparability: float
+    mean_goodhart: float
+    matched_expectations: int
+    total_cases: int
+
+
 def to_jsonable(value: Any) -> Any:
     if is_dataclass(value):
         return {key: to_jsonable(inner) for key, inner in asdict(value).items()}
