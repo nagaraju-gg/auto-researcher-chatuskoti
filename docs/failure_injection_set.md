@@ -7,7 +7,7 @@ This is a core part of the benchmark story, not an optional appendix. The failur
 ## Injected interventions
 
 - `pyrrhic_probe`: pyrrhic win injection
-- `metric_gaming_probe`: Goodhart-style injection
+- `metric_gaming_probe`: metric-gaming / validity-failure injection
 - `broken_probe`: broken failure injection
 - `eval_tta`: incomparable evaluation injection
 
@@ -18,7 +18,7 @@ The named cases are defined in [chatuskoti_evals/scenarios.py](../chatuskoti_eva
 These three should anchor the paper and short demo:
 
 1. Pyrrhic win example
-2. Goodhart example
+2. Metric-gaming example
 3. Recovery via Vec3 history
 
 ## Scope

@@ -69,8 +69,9 @@ class ReportGenerator:
                     f"### Iteration {entry.iteration}: `{entry.action_spec.name}`",
                     f"- Action: `{entry.resolver_action}`",
                     f"- Why: `{entry.resolver_reason}`",
-                    f"- Vec3: `({entry.run_score.mean.truthness:.3f}, {entry.run_score.mean.coherence:.3f}, {entry.run_score.mean.comparability:.3f})`",
-                    f"- Goodhart score: `{entry.run_score.goodhart_score:.3f}`",
+                    f"- TRV: `({entry.run_score.mean.truthness:.3f}, {entry.run_score.mean.reliability:.3f}, {entry.run_score.mean.validity:.3f})`",
+                    f"- Reliability components: `{format_components(entry.run_score.axis_components.get('reliability', {}))}`",
+                    f"- Validity components: `{format_components(entry.run_score.axis_components.get('validity', {}))}`",
                     f"- Signals: `{', '.join(entry.run_score.fired_signals) or 'none'}`",
                 ]
             )
@@ -110,7 +111,7 @@ class ReportGenerator:
 
         if mode == "challenge":
             if winner == "vec3":
-                verdict_line = "- Verdict: `Vec3` wins on canonical benchmark metric while also preserving structural validity in challenge mode."
+                verdict_line = "- Verdict: `Vec3` wins on canonical benchmark metric while also preserving TRV validity in challenge mode."
             elif winner == "binary":
                 verdict_line = "- Verdict: `binary` is higher on canonical benchmark metric for this challenge run, but that metric must be read together with benchmark-aware invalid merges."
             else:
@@ -141,7 +142,7 @@ class ReportGenerator:
                     "## Readout",
                     "",
                     "- This challenge run is designed to test whether the controller distinguishes benchmark-aware bad merges from clean improvements.",
-                    "- The main signal here is not final metric alone; it is whether each controller adopts or blocks pyrrhic, Goodhart-style, and incomparable cases.",
+                    "- The main signal here is not final metric alone; it is whether each controller adopts or blocks pyrrhic, metric-gaming, and incomparable cases.",
                     "- Treat this as companion evidence to the canonical failure benchmark rather than as a plain unconstrained leaderboard comparison.",
                 ]
             )
@@ -189,7 +190,7 @@ class ReportGenerator:
             interpretation_lines.extend(
                 [
                     "- In `challenge` mode, final metric should be read together with structural validity, not as the only success criterion.",
-                    "- A higher binary metric here can reflect merges that the benchmark is explicitly designed to classify as pyrrhic, Goodhart-style, or incomparable.",
+                    "- A higher binary metric here can reflect merges that the benchmark is explicitly designed to classify as pyrrhic, invalid, or metric-gamed.",
                 ]
             )
 
@@ -270,8 +271,9 @@ class ReportGenerator:
                     f"- Resolver reason: `{item.resolution.reason}`",
                     f"- Expected signals: `{', '.join(item.expected_signals) or 'none'}`",
                     f"- Actual signals: `{', '.join(item.run_score.fired_signals) or 'none'}`",
-                    f"- Vec3: `({item.run_score.mean.truthness:.3f}, {item.run_score.mean.coherence:.3f}, {item.run_score.mean.comparability:.3f})`",
-                    f"- Goodhart score: `{item.run_score.goodhart_score:.3f}`",
+                    f"- TRV: `({item.run_score.mean.truthness:.3f}, {item.run_score.mean.reliability:.3f}, {item.run_score.mean.validity:.3f})`",
+                    f"- Reliability components: `{format_components(item.run_score.axis_components.get('reliability', {}))}`",
+                    f"- Validity components: `{format_components(item.run_score.axis_components.get('validity', {}))}`",
                 ]
             )
         path = output_dir / "summary.md"
@@ -288,14 +290,14 @@ class ReportGenerator:
         rows = [
             "# Failure Benchmark Ablations",
             "",
-            "| Ablation | Matched | Mean Metric | Mean Truth | Mean Coherence | Mean Comparability | Mean Goodhart |",
-            "| --- | --- | --- | --- | --- | --- | --- |",
+            "| Ablation | Matched | Mean Metric | Mean Truth | Mean Reliability | Mean Validity |",
+            "| --- | --- | --- | --- | --- | --- |",
         ]
         for summary in summaries:
             rows.append(
                 f"| `{summary.label}` | `{summary.matched_expectations}/{summary.total_cases}` | "
-                f"`{summary.mean_primary_metric:.4f}` | `{summary.mean_truthness:.3f}` | `{summary.mean_coherence:.3f}` | "
-                f"`{summary.mean_comparability:.3f}` | `{summary.mean_goodhart:.3f}` |"
+                f"`{summary.mean_primary_metric:.4f}` | `{summary.mean_truthness:.3f}` | `{summary.mean_reliability:.3f}` | "
+                f"`{summary.mean_validity:.3f}` |"
             )
         path = output_dir / "summary.md"
         path.write_text("\n".join(rows) + "\n", encoding="utf-8")
@@ -310,16 +312,16 @@ class ReportGenerator:
 
 def classify_region(entry: HistoryEntry) -> str:
     t = entry.run_score.mean.truthness
-    c = entry.run_score.mean.coherence
-    k = entry.run_score.mean.comparability
-    if entry.run_score.goodhart_score >= 0.65 and t > 0:
-        return "goodhart"
-    if t > 0 and c < 0:
+    r = entry.run_score.mean.reliability
+    v = entry.run_score.mean.validity
+    if v < 0 and "eval_regime_changed" in entry.run_score.fired_signals:
+        return "invalid_comparison"
+    if v < 0:
+        return "metric_gaming"
+    if t > 0 and r < 0:
         return "pyrrhic"
-    if t < 0 and c < 0:
+    if t < 0 and r < 0:
         return "broken"
-    if k < 0:
-        return "incomparable"
     if t > 0:
         return "clean_win"
     return "clean_failure"
@@ -341,17 +343,15 @@ def describe_challenge_divergences(vec3_history: list[HistoryEntry], binary_hist
 def aggregate_failure_results(label: str, results: list[FailureCaseResult]) -> AggregateSummary:
     primary_metrics = [item.candidate_metric for item in results]
     truthnesses = [item.run_score.mean.truthness for item in results]
-    coherences = [item.run_score.mean.coherence for item in results]
-    comparabilities = [item.run_score.mean.comparability for item in results]
-    goodharts = [item.run_score.goodhart_score for item in results]
+    reliabilities = [item.run_score.mean.reliability for item in results]
+    validities = [item.run_score.mean.validity for item in results]
     return AggregateSummary(
         label=label,
         mean_primary_metric=round(mean(primary_metrics), 5),
         std_primary_metric=round(pstdev(primary_metrics) if len(primary_metrics) > 1 else 0.0, 5),
         mean_truthness=round(mean(truthnesses), 5),
-        mean_coherence=round(mean(coherences), 5),
-        mean_comparability=round(mean(comparabilities), 5),
-        mean_goodhart=round(mean(goodharts), 5),
+        mean_reliability=round(mean(reliabilities), 5),
+        mean_validity=round(mean(validities), 5),
         matched_expectations=sum(1 for item in results if item.matched_expectation),
         total_cases=len(results),
     )
@@ -422,15 +422,21 @@ def challenge_reason(entry: HistoryEntry) -> str:
     action = entry.resolver_action
     if action == "hold":
         return "Pyrrhic gain: metric improved while internals destabilized."
-    if action == "reject" and {"hyper_coherence", "proxy_decoupling"} & set(entry.run_score.fired_signals):
-        return "Goodhart-style gain: metric improved for suspicious reasons."
+    if action == "reframe" and {"hyper_coherence", "proxy_decoupling"} & set(entry.run_score.fired_signals):
+        return "Metric-gaming risk: validity collapsed despite a top-line gain."
     if action == "reject":
         return "Rejected as a non-improving or unstable change."
     if action == "reframe":
-        return "Incomparable gain: evaluation regime changed."
+        return "Invalid comparison: the apparent gain is not decision-ready."
     if action == "rollback":
         return "Damaged run: controller should actively revert."
     return "Accepted as a clean change."
+
+
+def format_components(components: dict[str, float]) -> str:
+    if not components:
+        return "none"
+    return ", ".join(f"{key}={value:.3f}" for key, value in sorted(components.items()))
 
 
 def escape_xml(text: str) -> str:

@@ -45,7 +45,16 @@ def add_backend_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--mode", choices=["default", "calibration", "challenge"], default="default")
     parser.add_argument(
         "--ablation",
-        choices=["full", "no_coherence", "no_comparability", "no_goodhart", "no_wisdom", "no_spread_gate"],
+        choices=[
+            "full",
+            "no_reliability",
+            "no_validity",
+            "no_wisdom",
+            "no_spread_gate",
+            "no_coherence",
+            "no_comparability",
+            "no_goodhart",
+        ],
         default="full",
     )
 
@@ -63,7 +72,13 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
     )
     ablation_cfg = AblationConfig(name=args.ablation)
     detector_cfg = ablation_cfg.apply(cfg.detector)
-    return replace(cfg, backend=args.backend, torch=torch_cfg, detector=detector_cfg, ablation=ablation_cfg)
+    return replace(
+        cfg,
+        backend=args.backend,
+        torch=torch_cfg,
+        detector=detector_cfg,
+        ablation=AblationConfig(name=ablation_cfg.normalized_name),
+    )
 
 
 def main() -> None:

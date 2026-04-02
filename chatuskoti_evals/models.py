@@ -8,8 +8,8 @@ from typing import Any
 @dataclass(frozen=True)
 class Vec3:
     truthness: float
-    coherence: float
-    comparability: float
+    reliability: float
+    validity: float
 
 
 @dataclass(frozen=True)
@@ -34,9 +34,9 @@ class RunMetrics:
 @dataclass(frozen=True)
 class SeedScore:
     vec3: Vec3
-    goodhart_score: float
     fired_signals: list[str]
     raw_detectors: dict[str, float | str | bool]
+    axis_components: dict[str, dict[str, float]]
 
 
 @dataclass(frozen=True)
@@ -45,9 +45,9 @@ class RunScore:
     std: Vec3
     mag: float
     spread: float
-    goodhart_score: float
     fired_signals: list[str]
     raw_detectors: dict[str, float]
+    axis_components: dict[str, dict[str, float]]
 
 
 @dataclass(frozen=True)
@@ -119,9 +119,8 @@ class AggregateSummary:
     mean_primary_metric: float
     std_primary_metric: float
     mean_truthness: float
-    mean_coherence: float
-    mean_comparability: float
-    mean_goodhart: float
+    mean_reliability: float
+    mean_validity: float
     matched_expectations: int
     total_cases: int
 

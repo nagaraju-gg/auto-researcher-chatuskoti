@@ -69,7 +69,8 @@ class ScoringTests(unittest.TestCase):
         )
         run_score = self.score(metric)
         self.assertGreater(run_score.mean.truthness, 0.25)
-        self.assertGreater(run_score.mean.coherence, 0.0)
+        self.assertGreater(run_score.mean.reliability, 0.0)
+        self.assertGreater(run_score.mean.validity, 0.0)
         resolution = resolve_vec3(run_score, self.cfg)
         self.assertEqual(resolution.action, "adopt")
         self.assertIn("exceeds adopt threshold", resolution.reason)
@@ -86,9 +87,10 @@ class ScoringTests(unittest.TestCase):
         )
         run_score = self.score(metric)
         self.assertIn("instability_gap", run_score.fired_signals)
+        self.assertLess(run_score.mean.reliability, self.cfg.reliability_threshold)
         self.assertEqual(resolve_vec3(run_score, self.cfg).action, "hold")
 
-    def test_goodhart_win_routes_to_reject(self) -> None:
+    def test_metric_gaming_win_routes_to_reframe(self) -> None:
         metric = make_metrics(
             run_id="goodhart",
             primary_metric=0.669,
@@ -100,8 +102,9 @@ class ScoringTests(unittest.TestCase):
             proxy_corr=0.42,
         )
         run_score = self.score(metric)
-        self.assertGreaterEqual(run_score.goodhart_score, self.cfg.goodhart_threshold)
-        self.assertEqual(resolve_vec3(run_score, self.cfg).action, "reject")
+        self.assertIn("proxy_decoupling", run_score.fired_signals)
+        self.assertLess(run_score.mean.validity, self.cfg.validity_threshold)
+        self.assertEqual(resolve_vec3(run_score, self.cfg).action, "reframe")
 
     def test_incomparable_routes_to_reframe(self) -> None:
         metric = make_metrics(
@@ -116,8 +119,23 @@ class ScoringTests(unittest.TestCase):
             objective_family="focal_loss",
         )
         run_score = self.score(metric)
-        self.assertLess(run_score.mean.comparability, 0.0)
+        self.assertLess(run_score.mean.validity, self.cfg.validity_threshold)
         self.assertEqual(resolve_vec3(run_score, self.cfg).action, "reframe")
+
+    def test_broken_failure_routes_to_rollback(self) -> None:
+        metric = make_metrics(
+            run_id="broken",
+            primary_metric=0.580,
+            train_loss=1.68,
+            val_loss=1.96,
+            train_val_gap=0.28,
+            grad_norm_mean=5.9,
+            grad_norm_std=0.32,
+        )
+        run_score = self.score(metric)
+        self.assertLess(run_score.mean.truthness, -self.cfg.adopt_truth_threshold)
+        self.assertLess(run_score.mean.reliability, self.cfg.reliability_threshold)
+        self.assertEqual(resolve_vec3(run_score, self.cfg).action, "rollback")
 
     def test_noisy_lucky_seed_routes_to_keep_going(self) -> None:
         metrics = [
@@ -149,5 +167,22 @@ class ScoringTests(unittest.TestCase):
         )
         run_score = self.score(metric)
         self.assertNotIn("exploding_gradients", run_score.fired_signals)
-        self.assertGreater(run_score.mean.coherence, 0.0)
+        self.assertGreater(run_score.mean.reliability, 0.0)
         self.assertEqual(resolve_vec3(run_score, self.cfg).action, "adopt")
+
+    def test_logs_axis_components_for_reliability_and_validity(self) -> None:
+        metric = make_metrics(
+            run_id="component-check",
+            primary_metric=0.666,
+            train_loss=1.33,
+            val_loss=1.51,
+            train_val_gap=0.20,
+            grad_norm_mean=1.9,
+            grad_norm_std=0.03,
+            proxy_corr=0.50,
+        )
+        run_score = self.score(metric)
+        self.assertIn("reliability", run_score.axis_components)
+        self.assertIn("validity", run_score.axis_components)
+        self.assertIn("seed_variance", run_score.axis_components["reliability"])
+        self.assertIn("proxy_alignment", run_score.axis_components["validity"])

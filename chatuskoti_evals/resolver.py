@@ -6,32 +6,25 @@ from chatuskoti_evals.models import Resolution, RunMetrics, RunScore
 
 def resolve_vec3(run_score: RunScore, cfg: DetectorConfig) -> Resolution:
     t = run_score.mean.truthness
-    c = run_score.mean.coherence
-    k = run_score.mean.comparability
+    r = run_score.mean.reliability
+    v = run_score.mean.validity
 
-    if run_score.mag < cfg.min_magnitude:
-        return Resolution("keep_going", f"signal magnitude {run_score.mag:.3f} is below minimum {cfg.min_magnitude:.3f}")
     if cfg.enable_spread_gate and run_score.spread > cfg.max_spread:
         return Resolution("keep_going", f"seed spread {run_score.spread:.3f} exceeds maximum {cfg.max_spread:.3f}")
-    if cfg.enable_goodhart and run_score.goodhart_score >= cfg.goodhart_threshold and t > cfg.adopt_truth_threshold:
-        return Resolution(
-            "reject",
-            f"goodhart_score {run_score.goodhart_score:.3f} exceeds threshold {cfg.goodhart_threshold:.3f} while truthness is positive",
-        )
-    if cfg.enable_coherence and t > cfg.adopt_truth_threshold and c <= -cfg.incoherence_threshold:
-        return Resolution(
-            "hold",
-            f"truthness {t:.3f} is positive but coherence {c:.3f} is below -{cfg.incoherence_threshold:.3f}",
-        )
-    if cfg.enable_coherence and t < cfg.reject_truth_threshold and c <= -cfg.incoherence_threshold:
+    if cfg.enable_reliability and r < cfg.reliability_threshold and t < -cfg.adopt_truth_threshold:
         return Resolution(
             "rollback",
-            f"truthness {t:.3f} is below {cfg.reject_truth_threshold:.3f} and coherence {c:.3f} indicates damage",
+            f"truthness {t:.3f} is below -{cfg.adopt_truth_threshold:.3f} and reliability {r:.3f} indicates internal damage",
         )
-    if cfg.enable_comparability and k <= -cfg.comparability_threshold:
+    if cfg.enable_validity and v < cfg.validity_threshold:
         return Resolution(
             "reframe",
-            f"comparability {k:.3f} is below -{cfg.comparability_threshold:.3f}; baseline comparison is not valid",
+            f"validity {v:.3f} is below threshold {cfg.validity_threshold:.3f}; apparent gain is not decision-ready",
+        )
+    if cfg.enable_reliability and r < cfg.reliability_threshold:
+        return Resolution(
+            "hold",
+            f"reliability {r:.3f} is below threshold {cfg.reliability_threshold:.3f}; result is too unstable to merge",
         )
     if t > cfg.adopt_truth_threshold:
         return Resolution("adopt", f"truthness {t:.3f} exceeds adopt threshold {cfg.adopt_truth_threshold:.3f}")

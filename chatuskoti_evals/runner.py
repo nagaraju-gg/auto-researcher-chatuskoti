@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
-from statistics import mean, pstdev
 
 from chatuskoti_evals.benchmark import create_benchmark_adapter
 from chatuskoti_evals.config import AblationConfig, ExperimentConfig, LoopConfig
@@ -58,6 +58,7 @@ def run_single_loop(
     wisdom = WisdomStore.load(wisdom_path) if cfg.ablation.wisdom_enabled else WisdomStore()
     seeds = list(range(loop_cfg.n_seeds))
     progress = progress or RunProgressTracker(total_runs=_loop_run_count(loop_cfg))
+    run_log_path = _run_log_path()
 
     initial_baseline = adapter.record_baseline(
         seeds,
@@ -90,6 +91,18 @@ def run_single_loop(
             resolution = resolve_vec3(run_score, detector_cfg)
         else:
             resolution = resolve_binary(candidate_metrics, current_baseline.metrics, detector_cfg)
+
+        _append_run_log(
+            run_log_path,
+            timestamp=datetime.now(UTC).isoformat(),
+            backend=cfg.backend,
+            controller=loop_cfg.controller,
+            action_name=action.name,
+            baseline_id=compared_baseline_id,
+            run_score=run_score,
+            resolution=resolution,
+            ablation=cfg.ablation.normalized_name,
+        )
 
         if resolution.action == "adopt":
             adapter.adopt(candidate_state)
@@ -256,7 +269,7 @@ def run_ablation_bundle(
     cfg: ExperimentConfig | None = None,
     *,
     seeds: int = 3,
-    ablations: tuple[str, ...] = ("full", "no_coherence", "no_comparability", "no_goodhart", "no_wisdom", "no_spread_gate"),
+    ablations: tuple[str, ...] = ("full", "no_reliability", "no_validity", "no_wisdom", "no_spread_gate"),
 ) -> list[AggregateSummary]:
     cfg = cfg or ExperimentConfig()
     output_root.mkdir(parents=True, exist_ok=True)
@@ -268,8 +281,9 @@ def run_ablation_bundle(
         ablated_cfg = replace(cfg, ablation=AblationConfig(name=ablation_name))
         detector_cfg = ablated_cfg.ablation.apply(ablated_cfg.detector)
         results = _score_failure_case_executions(executions, baseline, detector_cfg)
-        report_generator.write_failure_injection_report(output_root / ablation_name / "failure_injection", baseline, results)
-        summaries.append(aggregate_failure_results(ablation_name, results))
+        normalized_ablation = ablated_cfg.ablation.normalized_name
+        report_generator.write_failure_injection_report(output_root / normalized_ablation / "failure_injection", baseline, results)
+        summaries.append(aggregate_failure_results(normalized_ablation, results))
 
     report_generator.write_ablation_report(output_root, summaries)
     _write_manifest(
@@ -357,6 +371,17 @@ def _score_failure_case_executions(
                 matched_expectation=matched_signals and matched_resolution,
             )
         )
+        _append_run_log(
+            _run_log_path(),
+            timestamp=datetime.now(UTC).isoformat(),
+            backend="failure_injection",
+            controller="vec3",
+            action_name=execution.action_name,
+            baseline_id=baseline.baseline_id,
+            run_score=run_score,
+            resolution=resolution,
+            ablation=getattr(detector_cfg, "ablation_name", "full"),
+        )
     return results
 
 
@@ -388,3 +413,45 @@ def _epoch_count(cfg: ExperimentConfig) -> int:
 
 def _loop_run_count(loop_cfg: LoopConfig) -> int:
     return loop_cfg.n_seeds * (loop_cfg.max_iterations + 1)
+
+
+def _append_run_log(
+    path: Path,
+    *,
+    timestamp: str,
+    backend: str,
+    controller: str,
+    action_name: str,
+    baseline_id: str,
+    run_score,
+    resolution,
+    ablation: str,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema_version": 1,
+        "timestamp": timestamp,
+        "backend": backend,
+        "controller": controller,
+        "action_name": action_name,
+        "baseline_id": baseline_id,
+        "ablation": ablation,
+        "features": run_score.raw_detectors,
+        "axis_components": run_score.axis_components,
+        "T": run_score.mean.truthness,
+        "R": run_score.mean.reliability,
+        "V": run_score.mean.validity,
+        "spread": run_score.spread,
+        "resolver_action": resolution.action,
+        "resolver_reason": resolution.reason,
+        "fired_signals": run_score.fired_signals,
+    }
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, sort_keys=True) + "\n")
+
+
+def _run_log_path() -> Path:
+    override = os.environ.get("CHATUSKOTI_RUN_LOG_PATH")
+    if override:
+        return Path(override)
+    return Path("logs") / "runs.jsonl"

@@ -56,7 +56,7 @@ ACTION_LIBRARY: list[ActionSpec] = [
         name="eval_tta",
         family="evaluation.tta",
         params={"tta": True},
-        rationale="Metric can improve while comparability collapses because the eval protocol changed.",
+        rationale="Metric can improve while validity collapses because the eval protocol changed.",
     ),
     ActionSpec(
         name="dropout_high",

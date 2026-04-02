@@ -2,13 +2,12 @@
 
 This document captures the strongest current benchmark artifact for the project:
 
-- source run: [summary.md](../artifacts/strong_v1/canonical_failure/failure_injection/summary.md)
+- source run: [summary.md](../artifacts/strong_v1_1_torch/canonical_failure/failure_injection/summary.md)
 - benchmark type: explicit adversarial calibration suite
 - backend: torch
-- checked-in artifact budget: `10` epochs, `1` seed, `num_workers=0`
-- release-target regeneration budget: `10` epochs, `3` seeds, `num_workers=0`
+- current artifact budget: `10` epochs, `3` seeds, `num_workers=0`
 
-This document refers to the checked-in canonical artifact in the repo today. The release bundle script is set up to regenerate the same benchmark in the stronger `3`-seed configuration on a faster machine.
+This document refers to the strongest current torch V1.1 artifact in the repo workspace.
 
 ## Core result
 
@@ -16,10 +15,10 @@ The benchmark validates all four intended `Vec3` branches on the real torch back
 
 | Case | Candidate Metric | Binary | Vec3 | Why Vec3 differs |
 | --- | ---: | --- | --- | --- |
-| Pyrrhic probe | `0.4486` | `adopt` | `hold` | Metric improves, but coherence is negative from gap and instability signals |
-| Goodhart probe | `0.4536` | `adopt` | `reject` | Metric improves, but `goodhart_score=0.840` from hyper-coherence and proxy decoupling |
-| Broken probe | `0.3886` | `reject` | `rollback` | Metric worsens and coherence is strongly negative, indicating internal damage |
-| Eval TTA | `0.4250` | `adopt` | `reframe` | Comparison is invalid because the evaluation regime changed |
+| Pyrrhic probe | `0.4519` | `adopt` | `hold` | Metric improves, but reliability is negative from gap and instability signals |
+| Metric-gaming probe | `0.4569` | `adopt` | `reframe` | Metric improves, but validity collapses under proxy decoupling |
+| Broken probe | `0.3919` | `reject` | `rollback` | Metric worsens and reliability is strongly negative, indicating internal damage |
+| Eval TTA | `0.4272` | `adopt` | `reframe` | Comparison is invalid because the evaluation regime changed |
 
 Headline numbers:
 
@@ -34,7 +33,7 @@ This benchmark supports the narrow claim that a `Vec3` evaluator can distinguish
 In particular, it now demonstrates:
 
 - pyrrhic improvement handling
-- Goodhart-style metric-gaming detection
+- metric-gaming / validity failure detection
 - broken failure escalation
 - incomparability detection
 
@@ -52,7 +51,7 @@ It should not be used to claim:
 
 Use wording close to:
 
-> On a benchmark-specific adversarial calibration suite for `CIFAR-100 + ResNet-18`, the `Vec3` evaluator correctly separated pyrrhic, Goodhart-style, broken, and incomparable outcomes, while a binary metric-only controller would have accepted three of the four cases.
+> On a benchmark-specific adversarial calibration suite for `CIFAR-100 + ResNet-18`, the `Vec3` evaluator correctly separated pyrrhic, metric-gamed, broken, and incomparable outcomes, while a binary metric-only controller would have accepted three of the four cases.
 
 Avoid wording like:
 
@@ -63,7 +62,7 @@ Avoid wording like:
 1. Show the four-case table.
 2. Focus visually on the three binary false positives:
    - pyrrhic probe
-   - Goodhart probe
+   - metric-gaming probe
    - eval regime shift
 3. Use the broken probe as the “damage escalation” case rather than the headline case.
 4. Present open-loop controller runs only after this benchmark, as exploratory evidence.

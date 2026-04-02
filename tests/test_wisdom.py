@@ -16,15 +16,16 @@ class WisdomTests(unittest.TestCase):
             std=Vec3(0.0, 0.0, 0.0),
             mag=1.04,
             spread=0.0,
-            goodhart_score=0.1,
             fired_signals=["clean_win"],
             raw_detectors={},
+            axis_components={"reliability": {}, "validity": {}},
         )
         store.update("regularization.stochastic_depth", score)
         store.update("regularization.stochastic_depth", score)
 
         predicted = store.predict("regularization.stochastic_depth")
         self.assertAlmostEqual(predicted.truthness, 0.6)
+        self.assertAlmostEqual(predicted.reliability, 0.5)
         self.assertIn("regularization.stochastic_depth", store.confident_families())
 
         with tempfile.TemporaryDirectory() as tempdir:
@@ -32,4 +33,3 @@ class WisdomTests(unittest.TestCase):
             store.save(path)
             loaded = WisdomStore.load(path)
             self.assertEqual(loaded.snapshot()["regularization.stochastic_depth"]["count"], 2)
-

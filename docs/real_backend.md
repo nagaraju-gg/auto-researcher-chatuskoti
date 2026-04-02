@@ -20,22 +20,25 @@ python3 -m chatuskoti_evals.cli compare \
   --backend torch \
   --data-dir data \
   --device auto \
-  --epochs 30 \
+  --epochs 10 \
   --batch-size 128 \
   --eval-batch-size 256 \
-  --output artifacts/torch_compare
+  --num-workers 0 \
+  --output artifacts/strong_v1_1_torch/challenge_compare
 ```
 
-Run a single controller:
+Run the canonical failure benchmark:
 
 ```bash
-python3 -m chatuskoti_evals.cli run-loop \
-  --controller vec3 \
+python3 -m chatuskoti_evals.cli run-failure-set \
   --backend torch \
-  --data-dir data \
-  --device cuda \
-  --epochs 30 \
-  --output artifacts/torch_vec3
+  --device auto \
+  --epochs 10 \
+  --batch-size 128 \
+  --eval-batch-size 256 \
+  --num-workers 0 \
+  --seeds 3 \
+  --output artifacts/strong_v1_1_torch/canonical_failure
 ```
 
 ## Notes
@@ -43,5 +46,5 @@ python3 -m chatuskoti_evals.cli run-loop \
 - The backend trains `torchvision.models.resnet18(weights=None, num_classes=100)`.
 - `stochastic_depth_*` now applies residual drop-path across the ResNet blocks on the torch path.
 - `dropout_high` remains an explicit classifier-dropout stress action.
-- `eval_tta` changes the evaluation hash and should drive comparability negative as intended.
+- `eval_tta` changes the evaluation hash and should drive validity below the merge threshold as intended.
 - The adapter logs real metrics for validation accuracy, train/val loss gap, gradient statistics, weight distance, and proxy metrics.

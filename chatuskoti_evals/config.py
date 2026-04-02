@@ -7,23 +7,20 @@ from pathlib import Path
 @dataclass(frozen=True)
 class DetectorConfig:
     truth_delta_scale: float = 0.02
-    min_magnitude: float = 0.18
     max_spread: float = 0.30
     adopt_truth_threshold: float = 0.25
-    reject_truth_threshold: float = -0.25
-    incoherence_threshold: float = 0.35
-    comparability_threshold: float = 0.80
-    goodhart_threshold: float = 0.65
+    reliability_threshold: float = 0.35
+    validity_threshold: float = 0.15
     gap_multiplier: float = 1.6
     grad_mean_multiplier: float = 1.8
     grad_std_multiplier: float = 1.7
     hypercoherence_ratio: float = 0.40
     proxy_corr_drop: float = 0.18
-    improvement_for_goodhart: float = 0.015
+    seed_metric_std_scale: float = 0.02
+    weight_efficiency_floor: float = 0.18
     binary_metric_threshold: float = 0.002
-    enable_coherence: bool = True
-    enable_comparability: bool = True
-    enable_goodhart: bool = True
+    enable_reliability: bool = True
+    enable_validity: bool = True
     enable_spread_gate: bool = True
 
 
@@ -33,20 +30,28 @@ class AblationConfig:
     disable_wisdom: bool = False
 
     def apply(self, detector: DetectorConfig) -> DetectorConfig:
+        normalized = self.normalized_name
         updates: dict[str, bool] = {}
-        if self.name == "no_coherence":
-            updates["enable_coherence"] = False
-        elif self.name == "no_comparability":
-            updates["enable_comparability"] = False
-        elif self.name == "no_goodhart":
-            updates["enable_goodhart"] = False
-        elif self.name == "no_spread_gate":
+        if normalized == "no_reliability":
+            updates["enable_reliability"] = False
+        elif normalized == "no_validity":
+            updates["enable_validity"] = False
+        elif normalized == "no_spread_gate":
             updates["enable_spread_gate"] = False
         return DetectorConfig(**{**detector.__dict__, **updates})
 
     @property
     def wisdom_enabled(self) -> bool:
-        return self.name != "no_wisdom"
+        return self.normalized_name != "no_wisdom"
+
+    @property
+    def normalized_name(self) -> str:
+        aliases = {
+            "no_coherence": "no_reliability",
+            "no_comparability": "no_validity",
+            "no_goodhart": "no_validity",
+        }
+        return aliases.get(self.name, self.name)
 
 
 @dataclass(frozen=True)

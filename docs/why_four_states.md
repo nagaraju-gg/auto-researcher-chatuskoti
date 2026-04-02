@@ -10,7 +10,7 @@ That is too lossy for research loops. A model update can improve the reported me
 | --- | --- | --- |
 | Clean gain | Better metric, healthy internals, valid comparison | `adopt` |
 | Pyrrhic gain | Better metric, worse training dynamics | `hold` |
-| Gamed gain | Better metric, suspicious proxy behavior | `reject` |
+| Gamed gain | Better metric, suspicious proxy behavior | `reframe` |
 | Broken result | Worse metric, obvious damage | `rollback` |
 | Incomparable gain | Better metric under a changed eval regime | `reframe` |
 
@@ -25,12 +25,11 @@ The important shift is this:
 
 | Axis | What it asks | Why it helps resolve the four-state lens |
 | --- | --- | --- |
-| `truthness` | Did the anchored benchmark metric really improve? | Keeps the basic true/false direction of the result visible. |
-| `coherence` | Did internals remain healthy? | Distinguishes stable results from contradiction-like cases where the metric and the internal story diverge. |
-| `comparability` | Is this result even comparable to the baseline? | Separates normal evaluation from cases that are effectively neither cleanly true nor false because the comparison itself is invalid. |
-| `goodhart_score` | Did the metric move for suspicious reasons? | Catches metric-gaming behavior that can look superficially true on the top-line number alone. |
+| `truthness` (`T`) | Did the anchored benchmark metric really improve? | Keeps the basic true/false direction of the result visible. |
+| `reliability` (`R`) | Did internals remain healthy and reproducible? | Distinguishes stable results from pyrrhic cases where the metric and the internal story diverge. |
+| `validity` (`V`) | Is this result meaningful rather than gamed or comparison-invalid? | Separates real progress from suspicious wins and invalid before/after comparisons. |
 
-That extra structure turns evaluation into control logic. A pyrrhic gain should not be treated like a clean gain, and an incomparable gain should not even be treated as a valid before/after result.
+That extra structure turns evaluation into control logic. A pyrrhic gain should not be treated like a clean gain, and an incomparable or metric-gamed gain should not even be treated as a decision-ready before/after result.
 
 ## Why this matters for research loops
 

@@ -237,6 +237,39 @@ class SimulatedCIFAR100ResNet18Adapter:
                 metric_bias=state.metric_bias + 0.010,
             )
             tags.extend(["pyrrhic", "instability_gap"])
+        elif action.name == "pyrrhic_probe":
+            metric_bonus = 0.028
+            weight_distance = 0.29
+            next_state = replace(
+                state,
+                generalization=min(0.95, state.generalization + 0.015),
+                stability=max(0.0, state.stability - 0.24),
+                proxy_alignment=max(0.0, state.proxy_alignment - 0.06),
+                metric_bias=state.metric_bias + 0.014,
+            )
+            tags.extend(["pyrrhic_probe", "instability_gap"])
+        elif action.name == "metric_gaming_probe":
+            metric_bonus = 0.034
+            weight_distance = 0.33
+            next_state = replace(
+                state,
+                generalization=min(0.95, state.generalization + 0.018),
+                stability=max(0.0, state.stability - 0.12),
+                proxy_alignment=max(0.0, state.proxy_alignment - 0.34),
+                metric_bias=state.metric_bias + 0.018,
+            )
+            tags.extend(["metric_gaming_probe", "hypercoherence", "proxy_decoupling"])
+        elif action.name == "broken_probe":
+            metric_bonus = -0.030
+            weight_distance = 0.42
+            next_state = replace(
+                state,
+                generalization=max(0.0, state.generalization - 0.032),
+                stability=max(0.0, state.stability - 0.28),
+                proxy_alignment=max(0.0, state.proxy_alignment - 0.18),
+                metric_bias=state.metric_bias - 0.012,
+            )
+            tags.extend(["exploding_gradients", "broken_failure"])
 
         return CandidateState(
             state=next_state,
