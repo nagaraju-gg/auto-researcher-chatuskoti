@@ -23,6 +23,8 @@ Use this checklist before treating the repo as a public `Chatuskoti Eval Framewo
 - `python3 -m unittest discover -s tests -v`
 - `python3 scripts/generate_failure_figure.py artifacts/strong_v1_1_torch/canonical_failure/failure_injection/failure_results.json`
 - Be explicit about whether you are referencing the checked-in curated bundle or a freshly regenerated `3`-seed bundle.
+- Confirm the package version and release label agree before publishing anything as `v1.1`.
+- Add an annotated git tag such as `v1.1.0` once tests and curated artifacts are final.
 - Confirm the README points to the canonical benchmark artifact first.
 - Avoid committing local environment files, `.DS_Store`, and transient artifacts unless they are intentional benchmark outputs.
 

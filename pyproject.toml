@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chatuskoti-evals"
-version = "0.1.0"
+version = "1.1.0"
 description = "Chatuskoti Eval Framework for benchmark-specific research outcome evaluation."
 requires-python = ">=3.11"
 

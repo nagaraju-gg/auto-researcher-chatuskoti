@@ -8,6 +8,17 @@ Four-state evaluation framework for research-loop decisions on `CIFAR-100 + ResN
 
 The name comes from Gautama's [Chatuskoti](https://en.wikipedia.org/wiki/Catu%E1%B9%A3ko%E1%B9%ADi): a four-way logic lens that is useful when binary true/false decisions throw away important structure. In this repo that idea is implemented as a practical three-axis evaluator, not as philosophy-first labeling.
 
+The basic motivation is:
+
+| Question | Correct mode | Why |
+| --- | --- | --- |
+| "Paris is the capital of France" | True | Plain factual statement |
+| "Paris is the capital of Germany" | False | Plain factual error |
+| "Light is a wave" | Both | Useful in one frame, incomplete in another |
+| "What is the color of number 7?" | Neither | Ill-posed category error |
+
+Most benchmarks are good at the first two and weak on the latter two. The same failure shows up in research loops: not every apparent "gain" is the same kind of gain.
+
 The practical intuition is simple:
 
 | Outcome type | What binary sees | What the evaluator should notice |

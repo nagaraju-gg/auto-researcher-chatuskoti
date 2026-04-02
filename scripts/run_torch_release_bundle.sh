@@ -17,10 +17,10 @@ fi
   --eval-batch-size 256 \
   --num-workers 0 \
   --seeds 3 \
-  --output artifacts/strong_v1/canonical_failure
+  --output artifacts/strong_v1_1_torch/canonical_failure
 
-python3 scripts/generate_failure_figure.py \
-  artifacts/strong_v1/canonical_failure/failure_injection/failure_results.json
+"$PYTHON_BIN" scripts/generate_failure_figure.py \
+  artifacts/strong_v1_1_torch/canonical_failure/failure_injection/failure_results.json
 
 "$PYTHON_BIN" -m chatuskoti_evals.cli compare \
   --mode challenge \
@@ -33,7 +33,7 @@ python3 scripts/generate_failure_figure.py \
   --num-workers 0 \
   --iterations 4 \
   --seeds 3 \
-  --output artifacts/strong_v1/challenge_compare
+  --output artifacts/strong_v1_1_torch/challenge_compare
 
 "$PYTHON_BIN" -m chatuskoti_evals.cli run-ablation \
   --backend torch \
@@ -44,4 +44,4 @@ python3 scripts/generate_failure_figure.py \
   --eval-batch-size 256 \
   --num-workers 0 \
   --seeds 3 \
-  --output artifacts/strong_v1/ablations
+  --output artifacts/strong_v1_1_torch/ablations

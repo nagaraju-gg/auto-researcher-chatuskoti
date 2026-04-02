@@ -1,6 +1,6 @@
 # Next Steps
 
-This repo is already organized around a strong-v1 public bundle. The next step is to regenerate or extend that bundle on a machine with `torch` and `torchvision` installed.
+This repo is already organized around the `strong_v1_1_torch` public bundle. The next step is to regenerate or extend that bundle on a machine with `torch` and `torchvision` installed.
 
 ## 1. Prepare the machine
 
@@ -37,7 +37,7 @@ This uses:
 
 If that succeeds, move to the real comparison.
 
-## 3. Run the strong-v1 bundle
+## 3. Run the V1.1 bundle
 
 Use the prepared wrapper:
 
@@ -47,9 +47,9 @@ bash scripts/run_torch_release_bundle.sh
 
 That script generates:
 
-- `artifacts/strong_v1/canonical_failure`
-- `artifacts/strong_v1/challenge_compare`
-- `artifacts/strong_v1/ablations`
+- `artifacts/strong_v1_1_torch/canonical_failure`
+- `artifacts/strong_v1_1_torch/challenge_compare`
+- `artifacts/strong_v1_1_torch/ablations`
 
 ## 4. Or run the main pieces directly
 
@@ -61,7 +61,7 @@ If you want to run pieces one at a time:
   --epochs 10 \
   --seeds 3 \
   --num-workers 0 \
-  --output artifacts/strong_v1/canonical_failure
+  --output artifacts/strong_v1_1_torch/canonical_failure
 ```
 
 ```bash
@@ -72,7 +72,7 @@ If you want to run pieces one at a time:
   --iterations 4 \
   --seeds 3 \
   --num-workers 0 \
-  --output artifacts/strong_v1/challenge_compare
+  --output artifacts/strong_v1_1_torch/challenge_compare
 ```
 
 ```bash
@@ -81,14 +81,14 @@ If you want to run pieces one at a time:
   --epochs 10 \
   --seeds 3 \
   --num-workers 0 \
-  --output artifacts/strong_v1/ablations
+  --output artifacts/strong_v1_1_torch/ablations
 ```
 
 Expected outputs:
 
-- `artifacts/strong_v1/canonical_failure/failure_injection/summary.md`
-- `artifacts/strong_v1/challenge_compare/comparison.md`
-- `artifacts/strong_v1/ablations/summary.md`
+- `artifacts/strong_v1_1_torch/canonical_failure/failure_injection/summary.md`
+- `artifacts/strong_v1_1_torch/challenge_compare/comparison.md`
+- `artifacts/strong_v1_1_torch/ablations/summary.md`
 - JSON manifests, per-seed metrics, and SVG charts
 
 If the smoke test succeeds and the machine is CUDA-capable, then scale up to `--epochs 30`.
@@ -110,6 +110,7 @@ After the first run, inspect and likely refine:
 - threshold calibration in the detector config
 - failure probes and challenge-mode behavior, if the benchmark behavior drifts
 - paper wording so claims match real evidence rather than simulator behavior
+- package/release metadata so the package version, docs, and artifact bundle name stay aligned
 
 ## 7. Minimum publish package
 
@@ -117,7 +118,7 @@ For a credible first public drop, include:
 
 - the repo
 - exact run command
-- one saved strong-v1 bundle
+- one saved `strong_v1_1_torch` bundle
 - the canonical failure figure
 - the challenge comparison table
 - the ablation summary
